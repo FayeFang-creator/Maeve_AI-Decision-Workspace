@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maeve Decision Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  /* Same tokens as the demo (sampled from my.secfi.com/maeve; DM Sans / Newsreader as public stand-ins) */
+  :root{
+    --ink:#292a2d;
+    --muted:#5b666f;
+    --faint:#8a939a;
+    --line:rgba(91,102,111,.25);
+    --line-soft:#e6e8e9;
+    --fill:rgba(91,102,111,.06);
+    --teal:#004250;
+    --teal-2:#5c8b9e;
+    --teal-bg:#eef4f6;
+    --amber:#94601c;
+    --amber-bg:#fbf3e4;
+    --green:#2c6b5a;
+    --green-bg:#ebf4f0;
+    --paper:#fbfbfa;
+    --shadow:0 2px 11px rgba(21,96,121,.06), 0 18px 48px rgba(21,96,121,.08);
+    --serif:"Reckless","Newsreader",Georgia,serif;
+    --sans:"Matter","DM Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{font-family:var(--sans);color:var(--ink);background:#e9ecec;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.5}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+
+  /* ---------- Deck frame: fixed 1280×720 canvas, scaled to fit ---------- */
+  .viewport{position:fixed;inset:0;display:grid;place-items:center}
+  .deck{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none}
+  .slide{position:absolute;inset:0;background:var(--paper);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;
+    padding:52px 64px 56px;display:flex;flex-direction:column;visibility:hidden}
+  .slide.on{visibility:visible}
+
+  .kicker{display:flex;align-items:center;gap:12px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-2);font-weight:600}
+  .kicker .n{color:var(--teal)}
+  .kicker .bar{width:28px;height:1px;background:var(--teal-2)}
+  h2{font-family:var(--serif);font-weight:400;font-size:44px;line-height:1.08;letter-spacing:-.03em;margin:14px 0 0;max-width:1000px}
+  h2 em{font-style:italic;color:var(--teal)}
+  .lede{font-size:17px;color:var(--muted);margin:12px 0 0;max-width:880px}
+  .foot{position:absolute;left:64px;right:64px;bottom:22px;display:flex;justify-content:space-between;font-size:12px;color:var(--faint)}
+  .foot b{font-family:var(--serif);font-weight:500;font-size:15px;color:var(--ink);letter-spacing:-.02em}
+  .label{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+
+  /* ---------- Controls ---------- */
+  .nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line-soft);
+    border-radius:99px;padding:6px 8px;box-shadow:0 6px 20px rgba(0,0,0,.08);z-index:10}
+  .nav button{border:0;background:transparent;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+  .nav button:hover{background:var(--fill)}
+  .nav button:disabled{opacity:.3;cursor:default}
+  .dots{display:flex;gap:6px}
+  .dots i{width:7px;height:7px;border-radius:50%;background:#d3d8da;cursor:pointer}
+  .dots i.on{background:var(--teal);width:20px;border-radius:99px}
+  .count{font-size:12.5px;color:var(--muted);min-width:38px;text-align:center;font-variant-numeric:tabular-nums}
+  :focus-visible{outline:2px solid var(--teal-2);outline-offset:2px;border-radius:6px}
+
+  /* ---------- 1 · Benchmark ---------- */
+  .bench{margin-top:20px;display:grid;grid-template-columns:170px 1fr 1fr 1.25fr;border-top:1px solid var(--line-soft);font-size:14px;line-height:1.4}
+  .bench > div{padding:8px 16px 8px 0;border-bottom:1px solid var(--line-soft)}
+  .bench .rh{color:var(--faint);font-size:12.5px;font-weight:500;padding-top:10px}
+  .bench .ch{padding-top:12px;padding-bottom:10px}
+  .bench .ch .nm{font-family:var(--serif);font-size:22px;letter-spacing:-.02em;line-height:1.1}
+  .bench .ch .ty{font-size:12px;color:var(--faint);margin-top:2px}
+  .bench .me{background:var(--teal-bg);padding-left:18px;padding-right:18px;color:var(--teal);font-weight:500}
+  .bench .me.ch{border-radius:12px 12px 0 0}
+  .bench .me.last{border-radius:0 0 12px 12px;border-bottom-color:transparent}
+  .bench .me .nm{color:var(--teal)}
+  .bench .muted{color:var(--muted)}
+  .bench .q{font-family:var(--serif);font-style:italic;font-size:16px}
+  .s1-bottom{margin-top:18px;display:grid;grid-template-columns:1.35fr 1fr;gap:24px;align-items:end}
+  .claim{background:var(--teal);color:#fff;border-radius:14px;padding:14px 20px}
+  .claim .label{color:#a9c6d1}
+  .claim p{margin:4px 0 0;font-family:var(--serif);font-size:20px;line-height:1.22;letter-spacing:-.015em}
+  .note{font-size:12.5px;color:var(--muted);line-height:1.45}
+  .note b{color:var(--ink);font-weight:600}
+
+  /* ---------- 2 · Principles ---------- */
+  .shift{margin-top:24px;display:grid;grid-template-columns:1fr 44px 1fr;align-items:stretch}
+  .card{border:1px solid var(--line-soft);background:#fff;border-radius:14px;padding:16px 20px}
+  .card.from{background:transparent}
+  .card .t{font-family:var(--serif);font-size:22px;letter-spacing:-.02em;margin:4px 0 6px}
+  .card p{margin:0;font-size:14px;color:var(--muted)}
+  .card.to{border-color:var(--teal-2);box-shadow:0 0 0 3px var(--teal-bg)}
+  .arrow{display:grid;place-items:center;color:var(--teal-2);font-size:22px}
+  .chain{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative}
+  .link{position:relative;padding:14px 18px 14px 18px;background:#fff;border:1px solid var(--line-soft);margin-right:-1px}
+  .link:first-child{border-radius:12px 0 0 12px}
+  .link:last-child{border-radius:0 12px 12px 0;background:var(--teal);color:#fff;border-color:var(--teal)}
+  .link:last-child .s{color:#c7dbe2}
+  .link .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-2);font-weight:600}
+  .link:last-child .k{color:#a9c6d1}
+  .link .h{font-family:var(--serif);font-size:20px;letter-spacing:-.02em;margin:2px 0 3px;line-height:1.15}
+  .link .s{font-size:12.5px;color:var(--muted);line-height:1.4}
+  .link:not(:last-child)::after{content:"→";position:absolute;right:-11px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;
+    background:var(--paper);border:1px solid var(--line-soft);display:grid;place-items:center;font-size:12px;color:var(--teal-2);z-index:2}
+  .s2-bottom{margin-top:22px;display:grid;grid-template-columns:1.7fr 1fr;gap:28px}
+  .principles{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 26px}
+  .principles li{font-size:13.5px;color:var(--muted);line-height:1.4;padding-left:28px;position:relative}
+  .principles li b{display:block;color:var(--ink);font-weight:600;font-size:14.5px}
+  .principles li::before{content:attr(data-n);position:absolute;left:0;top:1px;font-family:var(--serif);font-size:17px;color:var(--teal-2)}
+  .scope{font-size:13px;line-height:1.45;border-left:1px solid var(--line-soft);padding-left:24px}
+  .scope ul{margin:6px 0 12px;padding-left:16px;color:var(--muted)}
+  .scope li{margin:2px 0}
+
+  /* ---------- 3 · Structure ---------- */
+  .s3{margin-top:22px;display:grid;grid-template-columns:400px 1fr;gap:36px;flex:1;min-height:0}
+  .map{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  .map td{padding:6px 0;border-bottom:1px solid var(--line-soft)}
+  .map td:first-child{color:var(--muted);width:44%}
+  .map td:nth-child(2){color:var(--faint);width:24px;text-align:center}
+  .map td:last-child{color:var(--teal);font-weight:500}
+  .map tr:first-child td{color:var(--faint);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+  .vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .vs > div{border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+  .vs .a{background:var(--fill)}
+  .vs .b{background:var(--teal-bg);color:var(--teal)}
+  .vs .t{font-weight:600;color:var(--ink);font-size:13px;margin-bottom:3px}
+  .vs .b .t{color:var(--teal)}
+  .wire{position:relative;background:#fff;border:1px solid var(--line-soft);border-radius:14px;box-shadow:var(--shadow);display:grid;grid-template-columns:118px 1fr;overflow:hidden;height:100%}
+  .w-side{background:linear-gradient(183deg,#f4f4f4,#fff);border-right:1px solid var(--line-soft);padding:14px 12px;font-size:11px;color:var(--muted)}
+  .w-side .wm{font-family:var(--serif);font-size:20px;color:var(--ink);letter-spacing:-.04em;margin-bottom:10px}
+  .w-side .ln{height:7px;border-radius:4px;background:#eceeef;margin:9px 0}
+  .w-side .on{background:var(--teal-bg);color:var(--teal);border-radius:6px;padding:4px 6px;font-weight:600}
+  .w-side .sub{padding-left:14px;margin-top:4px;line-height:1.8}
+  .w-main{display:flex;flex-direction:column;padding:10px 14px 12px;gap:8px;min-width:0}
+  .w-top{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .w-top .pills{display:flex;gap:5px}
+  .w-top .pills span{border:1px solid var(--line);border-radius:99px;padding:1px 8px}
+  .zone{position:relative;border:1.5px dashed rgba(92,139,158,.55);border-radius:10px;padding:8px 10px;font-size:11.5px;color:var(--muted);background:rgba(238,244,246,.35)}
+  .zone .zt{font-weight:600;color:var(--teal);font-size:12px}
+  .badge{position:absolute;top:-9px;left:-9px;width:20px;height:20px;border-radius:50%;background:var(--teal);color:#fff;font-size:11px;font-weight:600;display:grid;place-items:center}
+  .w-body{display:grid;grid-template-columns:1.25fr 1fr;gap:8px;flex:1;min-height:0}
+  .w-body .zone{display:flex;flex-direction:column;gap:6px}
+  .mini-verdict{font-family:var(--serif);font-size:30px;color:var(--ink);letter-spacing:-.03em;line-height:1}
+  .mini-ready{background:var(--amber-bg);color:var(--amber);border-radius:6px;padding:4px 7px;font-size:10.5px}
+  .mini-tabs{display:flex;gap:4px;font-size:10px}
+  .mini-tabs span{padding:2px 6px;border-radius:5px;background:#f0f2f3}
+  .mini-tabs span:first-child{background:var(--teal);color:#fff}
+  .mini-slider{height:4px;border-radius:2px;background:#e3e7e9;position:relative;margin:8px 0 2px}
+  .mini-slider::after{content:"";position:absolute;left:var(--p,40%);top:-5px;width:14px;height:14px;border-radius:50%;background:#fff;border:1.5px solid var(--teal)}
+  .mini-slider i{position:absolute;left:var(--t,60%);top:-6px;bottom:-6px;border-left:1.5px dashed var(--amber)}
+
+  /* ---------- 4 · Live demo ---------- */
+  .s4{margin-top:18px;display:grid;grid-template-columns:1fr 250px;gap:26px;flex:1;min-height:0}
+  .frame{border-radius:12px;overflow:hidden;border:1px solid var(--line-soft);box-shadow:var(--shadow);background:#fff;position:relative}
+  .frame iframe{border:0;width:1320px;height:800px;transform-origin:0 0;position:absolute;top:0;left:0}
+  .try{list-style:none;margin:10px 0 0;padding:0;counter-reset:t}
+  .try li{counter-increment:t;position:relative;padding:0 0 14px 34px;font-size:14px;color:var(--muted);line-height:1.4}
+  .try li::before{content:counter(t);position:absolute;left:0;top:-1px;width:22px;height:22px;border-radius:50%;border:1px solid var(--teal-2);color:var(--teal);font-size:12px;display:grid;place-items:center;font-weight:600}
+  .try li b{color:var(--ink);font-weight:600}
+  .open{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--teal);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:6px 14px;margin-top:4px}
+  .open:hover{background:var(--teal-bg)}
+
+  /* ---------- Feature slides (5–8) ---------- */
+  .feat{margin-top:24px;display:grid;grid-template-columns:380px 1fr;gap:44px;flex:1;min-height:0;align-items:start}
+  .pts{display:flex;flex-direction:column;gap:16px}
+  .pt .label{color:var(--teal-2)}
+  .pt p{margin:4px 0 0;font-size:14.5px;color:var(--muted);line-height:1.5}
+  .pt p b{color:var(--ink);font-weight:600}
+  .stage-card{background:#fff;border:1px solid var(--line-soft);border-radius:16px;box-shadow:var(--shadow);padding:24px 28px;position:relative}
+  .hint{position:absolute;font-size:12px;color:var(--teal);background:var(--teal-bg);border-radius:99px;padding:3px 10px;white-space:nowrap}
+
+  /* live mini-workspace on slide 5 */
+  .mw{display:grid;grid-template-columns:1fr 280px;gap:28px}
+  .mw .verdict{font-family:var(--serif);font-weight:400;font-size:52px;line-height:1.02;letter-spacing:-.035em;margin:8px 0 10px;transition:opacity .16s}
+  .mw .verdict.swap{opacity:0}
+  .mw .why{font-size:14px;color:var(--muted);margin:0;min-height:42px}
+  .flip{display:none;align-items:center;gap:8px;margin-top:14px;padding:9px 13px;border-radius:10px;border:1px solid #f1e3c8;color:var(--amber);font-size:13px;flex-wrap:wrap}
+  .flip.show{display:flex}
+  .flip button{border:0;background:none;padding:0;color:var(--amber);text-decoration:underline}
+  .driver{padding:14px 0;border-bottom:1px solid var(--line-soft)}
+  .driver:last-child{border-bottom:0}
+  .d-top{display:flex;justify-content:space-between;font-size:14px;font-weight:500}
+  .d-val{font-variant-numeric:tabular-nums;color:var(--teal)}
+  .d-rule{font-size:12.5px;color:var(--muted);margin:3px 0 12px}
+  .d-rule em{font-style:normal;color:var(--amber);font-weight:600}
+  .hot{color:var(--amber);font-weight:600}
+  .whatif{font-size:11px;color:var(--amber);background:var(--amber-bg);border-radius:99px;padding:1px 8px;margin-left:6px;font-weight:500}
+  .track{position:relative;padding-top:6px}
+  .tick{position:absolute;top:0;bottom:-4px;width:0;border-left:1.5px dashed var(--amber);pointer-events:none}
+  .tick span{position:absolute;top:-14px;transform:translateX(-50%);font-size:11px;color:var(--amber)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:#e3e7e9;border-radius:2px;margin:6px 0;position:relative;z-index:1}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid var(--teal);box-shadow:0 1px 4px rgba(0,0,0,.12);cursor:grab}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid var(--teal)}
+  .vs-conf{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .vs-conf > div{border-radius:10px;padding:11px 14px;font-size:12.5px;line-height:1.4}
+  .vs-conf .x{background:var(--fill);color:var(--muted)}
+  .vs-conf .y{background:var(--teal-bg);color:var(--teal)}
+  .vs-conf .big{font-family:var(--serif);font-size:19px;color:var(--ink);display:block;margin-bottom:2px}
+  .vs-conf .y .big{color:var(--teal)}
+
+  /* provenance (slide 6) */
+  .pos{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 20px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)}
+  .pos .k{display:block;font-size:12px;color:var(--faint)}
+  .pos .v{font-size:20px;font-variant-numeric:tabular-nums}
+  .src{border-bottom:1px dotted currentColor;position:relative;cursor:help}
+  .src.verified,.src.calculated{color:var(--teal)} .src.estimated{color:var(--amber)} .src.assumed{color:var(--muted)}
+  .src::after{content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 8px);background:#2b2d31;color:#fff;font-size:12px;line-height:1.35;white-space:nowrap;padding:6px 11px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:5}
+  .src:hover::after,.src:focus::after,.src.pin::after{opacity:1}
+  .legend{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+  .lg{border-radius:12px;padding:12px 14px;background:var(--fill)}
+  .lg .h{display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px}
+  .lg p{margin:4px 0 0;font-size:12.5px;color:var(--muted);line-height:1.4}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .k-verified{background:var(--teal)} .k-calculated{background:var(--teal-2)} .k-assumed{background:#b7bec3} .k-check{background:#d49a45}
+  .lg.check{background:var(--amber-bg)}
+  .lg.check .h{color:var(--amber)}
+
+  /* maturity (slide 7) */
+  .stages{display:flex;gap:4px;align-items:center;font-size:13px;color:var(--faint)}
+  .stages span{display:inline-flex;align-items:center;gap:6px}
+  .stages span:not(:last-child)::after{content:"";width:18px;height:1px;background:var(--line);margin:0 2px 0 6px}
+  .stages .done{color:var(--muted)}
+  .stages .now{color:var(--teal);font-weight:600}
+  .stages .now::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal)}
+  .readies{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .ready{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 18px;border-radius:12px;font-size:13.5px;line-height:1.4}
+  .ready p{margin:0;flex:1}
+  .ready .tag{font-weight:600}
+  .ready.amber{background:var(--amber-bg)} .ready.amber .tag{color:var(--amber)}
+  .ready.teal{background:var(--teal-bg)} .ready.teal .tag{color:var(--teal)}
+  .ready.green{background:var(--green-bg)} .ready.green .tag{color:var(--green)}
+  .fakebtn{background:var(--teal);color:#fff;border-radius:99px;padding:6px 14px;font-size:12.5px;font-weight:500;white-space:nowrap}
+  .modal{margin-top:20px;border:1px solid var(--line-soft);border-radius:14px;padding:16px 20px;background:var(--paper)}
+  .modal h4{font-family:var(--serif);font-weight:400;font-size:22px;margin:2px 0 2px;letter-spacing:-.02em}
+  .modal .sub{font-size:13px;color:var(--muted);margin:0 0 10px}
+  .modal .q{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13.5px}
+  .modal .q small{display:block;color:var(--muted);font-size:12px}
+  .choices{display:flex;gap:6px;flex:none}
+  .choices span{border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--muted)}
+  .choices span.on{border-color:var(--teal);background:var(--teal);color:#fff}
+
+  /* record + lifecycle (slide 8) */
+  .s8{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+  .receipt dl{margin:10px 0 0;display:grid;grid-template-columns:110px 1fr;gap:8px 12px;font-size:13px}
+  .receipt dt{color:var(--faint)}
+  .receipt dd{margin:0;color:var(--ink)}
+  .receipt ul{margin:0;padding-left:16px}
+  .receipt h4{font-family:var(--serif);font-weight:400;font-size:28px;margin:4px 0 0;letter-spacing:-.025em}
+  .receipt .row{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  .ghost{border:1px solid var(--line);border-radius:99px;padding:6px 14px;font-size:12.5px;color:var(--muted)}
+  .life{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+  .life div{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line-soft);background:#fff;border-radius:10px;padding:9px 14px;font-size:13.5px}
+  .life div span:last-child{font-size:12px;color:var(--faint)}
+  .life .me{border-color:var(--teal);background:var(--teal);color:#fff}
+  .life .me span:last-child{color:#c7dbe2}
+  .study{margin-top:16px;background:var(--fill);border-radius:12px;padding:12px 16px;font-size:12.5px;color:var(--muted);line-height:1.45}
+  .study b{color:var(--ink)}
+  .quote{font-family:var(--serif);font-size:21px;line-height:1.3;letter-spacing:-.015em;color:var(--teal);margin:0;border-left:2px solid var(--teal-2);padding-left:16px}
+
+  /* ---------- Print / PDF: one slide per page ---------- */
+  @page{size:1280px 720px;margin:0}
+  @media print{
+    html,body{overflow:visible;height:auto;background:#fff}
+    .viewport{position:static;display:block}
+    .deck{transform:none!important;width:1280px;height:auto}
+    .slide{position:relative;visibility:visible;border-radius:0;box-shadow:none;height:720px;page-break-after:always;break-after:page}
+    .nav{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="viewport">
+<main class="deck" id="deck">
+
+  <!-- 1 · Benchmark -->
+  <section class="slide on" aria-label="Benchmark">
+    <div class="kicker"><span class="n">01</span><span class="bar"></span>Benchmark</div>
+    <h2>Competitors start at the funding.<br>The workspace starts at <em>the decision.</em></h2>
+
+    <div class="bench" role="table">
+      <div class="rh"></div>
+      <div class="ch"><div class="nm">Equitybee</div><div class="ty">Funding marketplace</div></div>
+      <div class="ch"><div class="nm">ESO Fund</div><div class="ty">Direct exercise funding</div></div>
+      <div class="ch me"><div class="nm">Maeve Decision Workspace</div><div class="ty" style="color:var(--teal-2)">This concept, built on Secfi</div></div>
+
+      <div class="rh">The question it answers</div>
+      <div class="q muted">“Who will fund my exercise?”</div>
+      <div class="q muted">“Can you cover my exercise and tax?”</div>
+      <div class="q me">“Should I exercise, how much, and when?”</div>
+
+      <div class="rh">Core model</div>
+      <div class="muted">Matches employees with investors</div>
+      <div class="muted">Non-recourse funding, one provider</div>
+      <div class="me">AI on Secfi’s calc engine; financing is one of four options</div>
+
+      <div class="rh">Decision support</div>
+      <div class="muted">Calculators and guides, separate from the flow</div>
+      <div class="muted">Calculators and guides, separate from the flow</div>
+      <div class="me">Live scenarios, decision boundaries and assumptions in one place</div>
+
+      <div class="rh">How trust is earned</div>
+      <div class="muted">Network size, track record</div>
+      <div class="muted">Terms, direct relationship</div>
+      <div class="me">Reasoning the user can inspect: verified / calculated / assumed</div>
+
+      <div class="rh">User leaves with</div>
+      <div class="muted">A funding contract</div>
+      <div class="muted">A funding contract</div>
+      <div class="me last">A decision record Maeve keeps watching</div>
+    </div>
+
+    <div class="s1-bottom">
+      <div class="claim">
+        <div class="label">Core advantage</div>
+        <p>Decide before you fund. Financing becomes the honest answer to a decision, not the opening pitch, and the relationship outlives one transaction.</p>
+      </div>
+      <p class="note"><b>And general AI chat?</b> ChatGPT or Claude answer fluently, but have no grant data, no tax engine and nothing to come back to. Maeve already has all three; the workspace makes them visible.<br><br>Competitor rows based on public product materials, Oct 2026.</p>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>A design exploration for Secfi · 1 / 8</span></div>
+  </section>
+
+  <!-- 2 · Principles & scope -->
+  <section class="slide" aria-label="Design principles and scope">
+    <div class="kicker"><span class="n">02</span><span class="bar"></span>Design principles &amp; scope</div>
+    <h2>From designing a chatbot to designing <em>a workspace.</em></h2>
+
+    <div class="shift">
+      <div class="card from">
+        <div class="label">Designing a chatbot</div>
+        <div class="t">Question → answer</div>
+        <p>The user reads a conclusion and decides whether to believe it. Trust rests on how confident the text sounds.</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="card to">
+        <div class="label" style="color:var(--teal-2)">Designing a workspace</div>
+        <div class="t">Question → a shared decision model</div>
+        <p>The user inspects it, changes it and sees where the answer flips. Trust rests on what they can predict.</p>
+      </div>
+    </div>
+
+    <div class="chain">
+      <div class="link"><div class="k">Product</div><div class="h">Calibrated mental model</div><div class="s">I know what drives my answer and what Maeve doesn’t know.</div></div>
+      <div class="link"><div class="k">Decision</div><div class="h">Grounded decision</div><div class="s">I act on evidence I checked, not on tone.</div></div>
+      <div class="link"><div class="k">Relationship</div><div class="h">Calibrated trust</div><div class="s">I rely on Maeve where it’s strong, and see where it isn’t.</div></div>
+      <div class="link"><div class="k">Brand</div><div class="h">Long-term partner</div><div class="s">From the first grant to financing, secondaries and Wealth.</div></div>
+    </div>
+
+    <div class="s2-bottom">
+      <div>
+        <div class="label">Principles</div>
+        <ul class="principles">
+          <li data-n="1"><b>Simple by default, inspectable on demand</b>One direction first; reasons, options and sources one layer down.</li>
+          <li data-n="2"><b>Show the boundary, not just the outcome</b>Tell users where the answer would change, not a confidence score.</li>
+          <li data-n="3"><b>Every number says where it came from</b>Verified, calculated and assumed never look the same.</li>
+          <li data-n="4"><b>Ask only what can flip the answer</b>Inputs that just refine precision can wait.</li>
+        </ul>
+      </div>
+      <div class="scope">
+        <div class="label">Scope of this exploration</div>
+        <ul>
+          <li>One high-stakes decision: exercising vested ISOs</li>
+          <li>Inside Maeve, built from an existing chat</li>
+        </ul>
+        <div class="label">Out of scope</div>
+        <ul>
+          <li>Onboarding, real tax math, execution flows</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>A mental model is what trust is built on · 2 / 8</span></div>
+  </section>
+
+  <!-- 3 · Page structure -->
+  <section class="slide" aria-label="Page structure">
+    <div class="kicker"><span class="n">03</span><span class="bar"></span>Page structure</div>
+    <h2>Built on the agent workspace your users <em>already know.</em></h2>
+
+    <div class="s3">
+      <div>
+        <p class="lede" style="margin:0;font-size:14.5px">Secfi’s users are engineers, PMs and designers at startups: daily users of ChatGPT, Claude, Cursor and Claude Code / Codex. They already know how to work <i>with</i> an agent on a shared object. So the layout borrows that frame, and swaps the repo for a decision.</p>
+        <table class="map">
+          <tr><td>Claude Code / Codex</td><td></td><td>Maeve workspace</td></tr>
+          <tr><td>Repository</td><td>→</td><td>Your position (grants, tax, cash)</td></tr>
+          <tr><td>Plan &amp; task status</td><td>→</td><td>Decision stages</td></tr>
+          <tr><td>Diff</td><td>→</td><td>Options compared</td></tr>
+          <tr><td>Tests</td><td>→</td><td>Decision boundaries</td></tr>
+          <tr><td>Commit &amp; history</td><td>→</td><td>Saved decision, watched</td></tr>
+        </table>
+        <div class="vs">
+          <div class="a"><div class="t">Maeve today</div>Structured text in a chat thread: answers, tables, citations and Trace. The user reads.</div>
+          <div class="b"><div class="t">Maeve panel</div>A working panel next to the chat. The user drags, answers and inspects, and learns the analysis by doing it.</div>
+        </div>
+      </div>
+
+      <div class="wire" aria-label="Annotated layout of the workspace">
+        <div class="w-side">
+          <div class="wm">secfi</div>
+          <div class="ln" style="width:70%"></div><div class="ln" style="width:55%"></div><div class="ln" style="width:65%"></div><div class="ln" style="width:60%"></div>
+          <div class="on">Maeve</div>
+          <div class="sub">Chats<br><b style="color:var(--teal)">Decisions</b></div>
+          <div class="zone" style="margin-top:14px;padding:6px 8px;font-size:10.5px"><span class="badge">1</span>Decisions live next to chats, so they can be reopened</div>
+        </div>
+        <div class="w-main">
+          <div class="w-top"><span>Maeve › Decisions › <b style="color:var(--ink)">Exercise my vested ISOs?</b></span><span class="pills"><span>Open in chat</span><span>Save decision</span></span></div>
+          <div class="zone"><span class="badge">2</span><span class="zt">Question + stage</span> · Explore → <b style="color:var(--teal)">Estimate</b> → Calculate → Decide → Monitor</div>
+          <div class="w-body">
+            <div class="zone"><span class="badge">3</span><span class="zt">Focus: current direction</span>
+              <div class="mini-verdict">Partial exercise</div>
+              <div style="font-size:10.5px">Narrow lead over wait · Compare all 4 options ↓</div>
+              <div class="mini-ready"><b>Preliminary.</b> 2 open questions could still change this.</div>
+              <div style="font-size:10.5px;border-top:1px solid var(--line-soft);padding-top:5px">Your 4 options · best fit first, pros &amp; cons on open</div>
+            </div>
+            <div class="zone"><span class="badge">4</span><span class="zt">Inspector</span>
+              <div style="font-size:10.5px">Your position at a glance · every value tagged with its source</div>
+              <div class="mini-tabs"><span>Tipping points</span><span>How sure is this?</span></div>
+              <div style="font-size:10.5px">409A · above $22, waiting wins</div><div class="mini-slider" style="--p:32%;--t:57%"><i></i></div>
+              <div style="font-size:10.5px">Cash kept · above $90k, financing wins</div><div class="mini-slider" style="--p:43%;--t:71%"><i></i></div>
+            </div>
+          </div>
+          <div class="zone"><span class="badge">5</span><span class="zt">Chat as a control</span> · “What if the 409A jumps to $24?” moves the panel, not just the thread</div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>Chat is the entry point; the workspace is the product · 3 / 8</span></div>
+  </section>
+
+  <!-- 4 · Live demo -->
+  <section class="slide" aria-label="Live demo">
+    <div class="kicker"><span class="n">04</span><span class="bar"></span>Live demo</div>
+    <h2>“Should I exercise my vested options now?”</h2>
+    <div class="s4">
+      <div class="frame"><iframe src="maeve_decision_workspace_v2.html" title="Maeve Decision Workspace demo" loading="lazy"></iframe></div>
+      <div>
+        <div class="label">Try it here</div>
+        <ol class="try">
+          <li>Drag <b>Current 409A</b> past the $22 line. The direction flips to <b>Wait</b>, and the panel says why.</li>
+          <li>Open <b>How sure is this?</b> It starts with <b>Needs a check</b>: only two unknowns can change the answer.</li>
+          <li>Click <b>Answer 2 questions</b>, then <b>Run calculation</b>.</li>
+          <li><b>Save decision</b> and let Maeve watch what would make you revisit it.</li>
+        </ol>
+        <a class="open" href="maeve_decision_workspace_v2.html" target="_blank" rel="noopener">Open full screen ↗</a>
+        <p class="note" style="margin-top:18px">Fictional user: 32,000 vested ISOs, $260k salary, $120k savings, a possible move to the Netherlands. Heuristic model; the demo is about the interaction, not the math.</p>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>Built with Claude Code · 4 / 8</span></div>
+  </section>
+
+  <!-- 5 · Decision boundary -->
+  <section class="slide" aria-label="Feature: decision boundary">
+    <div class="kicker"><span class="n">05</span><span class="bar"></span>Feature · Tipping points</div>
+    <h2>Show where the answer flips, <em>not how sure the AI is.</em></h2>
+    <div class="feat">
+      <div class="pts">
+        <div class="pt"><div class="label">Problem</div><p>In chat, the honest answer is “it depends”. Users then have to guess <b>on what</b>, and by how much.</p></div>
+        <div class="pt"><div class="label">Design</div><p>Each driver carries its own threshold, drawn on the control. Moving it past the line flips the direction live, labels it <b>What-if</b>, and offers a way back to the real profile.</p></div>
+        <div class="pt"><div class="label">Why it builds trust</div><p>Direct manipulation turns “Maeve said so” into “I can see the rule”. Users learn which input actually matters for <b>their</b> case.</p></div>
+      </div>
+      <div class="stage-card">
+        <div class="mw">
+          <div>
+            <div class="label">Current direction</div>
+            <div class="verdict" id="mVerdict">Partial exercise</div>
+            <p class="why" id="mWhy"></p>
+            <div class="flip" id="mFlip"></div>
+          </div>
+          <div>
+            <div class="driver">
+              <div class="d-top"><span>Current 409A<span class="whatif" id="mW" hidden>What-if</span></span><span class="d-val" id="mVal">$14.50</span></div>
+              <div class="d-rule" id="mRule"></div>
+              <div class="track"><div class="tick" style="left:56.7%"><span>$22</span></div><input id="m409a" type="range" min="5" max="35" step="0.5" value="14.5" aria-label="Current 409A per share"></div>
+            </div>
+            <div class="driver">
+              <div class="d-top"><span>Cash to keep untouched</span><span class="d-val">$70k</span></div>
+              <div class="d-rule">Above <em>$90k</em>, financing becomes the better route.</div>
+            </div>
+          </div>
+        </div>
+        <div class="vs-conf">
+          <div class="x"><span class="big">“83% confident”</span>A number users can’t act on or check.</div>
+          <div class="y"><span class="big">“Above $22, waiting wins”</span>A rule users can test against their own situation.</div>
+        </div>
+        <span class="hint" style="right:24px;top:-12px">Interactive · drag the 409A</span>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>Principle 2 · Show the boundary, not just the outcome · 5 / 8</span></div>
+  </section>
+
+  <!-- 6 · Provenance -->
+  <section class="slide" aria-label="Feature: provenance">
+    <div class="kicker"><span class="n">06</span><span class="bar"></span>Feature · How sure is this?</div>
+    <h2>Every number says <em>where it came from.</em></h2>
+    <div class="feat">
+      <div class="pts">
+        <div class="pt"><div class="label">Problem</div><p>In a financial answer, a fact from Carta, an engine result and an AI guess all look the same. That’s where over-trust starts.</p></div>
+        <div class="pt"><div class="label">Design</div><p>Four epistemic states, one visual language. Colour carries the type; hover carries the source. <b>Amber is reserved for AI estimates</b>, so they can’t pass as calculations.</p></div>
+        <div class="pt"><div class="label">Builds on Trace</div><p>Maeve’s Trace already lets users follow the math. This moves it from a drill-down into the <b>first thing users see</b>, and leads with what still needs a check.</p></div>
+      </div>
+      <div class="stage-card">
+        <div class="label" style="margin-bottom:38px">Your position at a glance · hover any value</div>
+        <div class="pos">
+          <div><span class="k">Vested ISOs</span><span class="v"><span class="src verified pin" tabindex="0" data-tip="Carta import · synced Oct 1">32,000</span></span></div>
+          <div><span class="k">Strike</span><span class="v"><span class="src verified" tabindex="0" data-tip="Grant document · uploaded Sep 28">$3.80</span></span></div>
+          <div><span class="k">409A</span><span class="v"><span class="src verified" tabindex="0" data-tip="Carta · valuation Jun 30, 2026">$14.50</span></span></div>
+          <div><span class="k">Spread / share</span><span class="v"><span class="src calculated" tabindex="0" data-tip="Calculated · 409A − strike">$10.70</span></span></div>
+          <div><span class="k">Savings</span><span class="v"><span class="src assumed" tabindex="0" data-tip="You told Maeve">$120k</span></span></div>
+          <div><span class="k">Free after buffer</span><span class="v"><span class="src calculated" tabindex="0" data-tip="Calculated · savings − cash you keep">$50k</span></span></div>
+          <div><span class="k">AMT-free shares</span><span class="v"><span class="src estimated" tabindex="0" data-tip="Maeve estimate · needs filing status">~3–8k</span></span></div>
+          <div><span class="k">Exit window</span><span class="v"><span class="src assumed" tabindex="0" data-tip="Your estimate · not verifiable">2028–31</span></span></div>
+        </div>
+        <div class="legend">
+          <div class="lg check"><div class="h"><span class="dot k-check"></span>Needs a check</div><p>Unknowns that could change the direction. Shown first.</p></div>
+          <div class="lg"><div class="h"><span class="dot k-verified"></span>Verified</div><p>From Carta, documents or your tax profile.</p></div>
+          <div class="lg"><div class="h"><span class="dot k-calculated"></span>Calculated</div><p>Secfi engine or published tax rules.</p></div>
+          <div class="lg"><div class="h"><span class="dot k-assumed"></span>Assumed</div><p>Your view or a stated guess. Reasonable, not fact.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>Principle 3 · Every number says where it came from · 6 / 8</span></div>
+  </section>
+
+  <!-- 7 · Maturity -->
+  <section class="slide" aria-label="Feature: maturity">
+    <div class="kicker"><span class="n">07</span><span class="bar"></span>Feature · Readiness</div>
+    <h2>Say how finished the answer is, <em>before the user acts.</em></h2>
+    <div class="feat">
+      <div class="pts">
+        <div class="pt"><div class="label">Problem</div><p>A chat reply reads equally final whether it’s a first guess or an engine result. Users can’t tell when it’s safe to act.</p></div>
+        <div class="pt"><div class="label">Design</div><p>The workspace states its own maturity and always offers the <b>one next step</b> that moves it forward: answer, calculate, or save.</p></div>
+        <div class="pt"><div class="label">Ask less, ask better</div><p>Maeve only interrupts for unknowns that can flip the direction, and says why each one matters. Precision inputs stay folded away.</p></div>
+      </div>
+      <div class="stage-card">
+        <div class="stages"><span class="done">Explore</span><span class="now">Estimate</span><span>Calculate</span><span>Decide</span><span>Monitor</span></div>
+        <div class="readies">
+          <div class="ready amber"><p><span class="tag">Preliminary.</span> 2 unanswered questions could still change this direction.</p><span class="fakebtn">Answer 2 questions</span></div>
+          <div class="ready teal"><p><span class="tag">Ready to calculate.</span> Nothing open can flip this. Get exact share counts and tax.</p><span class="fakebtn">Run calculation</span></div>
+          <div class="ready green"><p><span class="tag">Calculated.</span> Numbers come from the Secfi tax engine using your confirmed inputs.</p><span class="fakebtn">Save decision</span></div>
+        </div>
+        <div class="modal">
+          <div class="label">2 quick questions</div>
+          <h4>Before I go further</h4>
+          <p class="sub">These two answers can change the direction. Everything else only changes the precision.</p>
+          <div class="q"><div>How do you file taxes?<small>Filing jointly roughly doubles your AMT room.</small></div><div class="choices"><span>Single</span><span class="on">Married, jointly</span></div></div>
+          <div class="q"><div>When might you move to the Netherlands?<small>Before vs. after changes which country taxes the gain.</small></div><div class="choices"><span>≤ 6 mo</span><span class="on">6–18 mo</span><span>Not moving</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>Principle 4 · Ask only what can flip the answer · 7 / 8</span></div>
+  </section>
+
+  <!-- 8 · Record & lifecycle -->
+  <section class="slide" aria-label="Feature: decision record and lifecycle">
+    <div class="kicker"><span class="n">08</span><span class="bar"></span>Feature · Save &amp; monitor</div>
+    <h2>Leave a decision, <em>not a chat bubble.</em></h2>
+    <div class="feat" style="grid-template-columns:1fr 420px">
+      <div class="s8">
+        <div class="stage-card receipt">
+          <div class="label">Decision record · Oct 5, 2026</div>
+          <h4>Partial exercise</h4>
+          <div style="font-size:13px;color:var(--muted)">Calculated with your confirmed inputs.</div>
+          <dl>
+            <dt>Based on</dt><dd>409A $14.50 · keep $70k cash · move in 6–18 mo · filing jointly</dd>
+            <dt>Still unverified</dt><dd>Tender offer terms</dd>
+            <dt>Revisit when</dt><dd><ul><li>A new 409A is issued</li><li>A tender offer is announced</li><li>Your move date is confirmed</li></ul></dd>
+          </dl>
+          <div class="row"><span class="ghost">Close</span><span class="fakebtn">Watch these for me</span></div>
+        </div>
+        <div>
+          <div class="label">Where the decision leads</div>
+          <div class="life">
+            <div class="me"><span>Decide in Maeve</span><span>understand → decide</span></div>
+            <div><span>Secfi Financing</span><span>if cash is the constraint</span></div>
+            <div><span>Secondaries</span><span>if a tender offer opens</span></div>
+            <div><span>Talk to an advisor</span><span>if a move or edge case</span></div>
+            <div><span>Secfi Wealth</span><span>after the exit</span></div>
+          </div>
+          <p class="note" style="margin-top:12px">The saved record is why users come back, and why the next Secfi product feels like a continuation rather than a sale.</p>
+        </div>
+      </div>
+      <div class="pts" style="gap:20px">
+        <p class="quote">Claude Code turns a conversation into a working codebase. Maeve can turn it into a living decision model.</p>
+        <div class="pt"><div class="label">Why it matters for Secfi</div><p>A decision Maeve keeps watching gives users a reason to return when the 409A, a tender offer or their life changes, which are exactly the moments Secfi’s products are for.</p></div>
+        <div class="study"><b>How I’d validate it.</b> A within-subject study, chat vs. workspace, 8–10 equity holders on the same exercise task. Measure <b>mental-model accuracy</b> (“what is Maeve assuming?”), <b>appropriate reliance</b> on a deliberately weak recommendation, and decision confidence. Success means better understanding without more blind trust.</div>
+      </div>
+    </div>
+    <div class="foot"><b>Maeve Decision Workspace</b><span>Concept prototype · fictional data · not financial advice · 8 / 8</span></div>
+  </section>
+
+</main>
+</div>
+
+<nav class="nav" aria-label="Slide navigation">
+  <button id="prev" type="button" aria-label="Previous slide"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></button>
+  <div class="dots" id="dots"></div>
+  <span class="count" id="count"></span>
+  <button id="next" type="button" aria-label="Next slide"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+</nav>
+
+<script>
+(() => {
+  const deck = document.getElementById('deck');
+  const slides = [...document.querySelectorAll('.slide')];
+  const dots = document.getElementById('dots');
+  let i = Math.min(Math.max((parseInt(location.hash.slice(1),10) || 1) - 1, 0), slides.length - 1);
+
+  slides.forEach((_, k) => { const d = document.createElement('i'); d.title = 'Slide ' + (k+1); d.onclick = () => go(k); dots.appendChild(d); });
+
+  function fit(){
+    const s = Math.min(innerWidth / 1320, (innerHeight - 70) / 740);
+    deck.style.transform = `scale(${s})`;
+    deck.style.marginTop = (-50 * s) + 'px';
+  }
+  function go(k){
+    i = Math.min(Math.max(k, 0), slides.length - 1);
+    slides.forEach((s, n) => s.classList.toggle('on', n === i));
+    [...dots.children].forEach((d, n) => d.classList.toggle('on', n === i));
+    document.getElementById('count').textContent = (i+1) + ' / ' + slides.length;
+    document.getElementById('prev').disabled = i === 0;
+    document.getElementById('next').disabled = i === slides.length - 1;
+    history.replaceState(null, '', '#' + (i+1));
+  }
+  document.getElementById('prev').onclick = () => go(i-1);
+  document.getElementById('next').onclick = () => go(i+1);
+  addEventListener('keydown', e => {
+    if (e.target.matches('input')) return;
+    if (['ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); go(i+1); }
+    if (['ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); go(i-1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End') go(slides.length - 1);
+  });
+  addEventListener('resize', fit);
+  fit(); go(i);
+
+  /* Slide 4: scale the embedded demo to its frame (layout units, unaffected by the deck scale) */
+  const frame = document.querySelector('.frame'), ifr = frame.querySelector('iframe');
+  const fitFrame = () => { const k = frame.clientWidth / 1320; ifr.style.transform = `scale(${k})`; ifr.style.height = (frame.clientHeight / k) + 'px'; };
+  addEventListener('resize', fitFrame); fitFrame();
+
+  /* Slide 5: live decision boundary, same rule as the demo */
+  const $ = id => document.getElementById(id);
+  const WHY = {
+    partial:'Exercise a tranche now to capture some upside, while keeping your home-purchase buffer intact.',
+    wait:'Exercising now is hard to justify at this valuation. Wait for a clearer event, then recalculate.'
+  };
+  const LABEL = { partial:'Partial exercise', wait:'Wait' };
+  let last = 'partial';
+  function renderMini(){
+    const v = parseFloat($('m409a').value);
+    const w = v > 22 ? 'wait' : 'partial';
+    $('mVal').textContent = '$' + v.toFixed(2);
+    $('mW').hidden = v === 14.5;
+    $('mRule').innerHTML = v <= 22 ? 'Above <em>$22</em>, waiting becomes stronger.' : '<span class="hot">Past the $22 threshold</span>: waiting is now stronger.';
+    $('mWhy').textContent = WHY[w];
+    if (w !== last) {
+      $('mVerdict').classList.add('swap');
+      setTimeout(() => { $('mVerdict').textContent = LABEL[w]; $('mVerdict').classList.remove('swap'); }, 160);
+      $('mFlip').innerHTML = `Changed from <b>${LABEL[last]}</b> to <b>${LABEL[w]}</b> after adjusting 409A · <button type="button" id="mReset">Reset to my profile</button>`;
+      $('mFlip').classList.add('show');
+      $('mReset').onclick = () => { $('m409a').value = 14.5; renderMini(); $('mFlip').classList.remove('show'); };
+      last = w;
+    }
+    if (v === 14.5) $('mFlip').classList.remove('show');
+  }
+  $('m409a').oninput = renderMini;
+  renderMini();
+})();
+</script>
+</body>
+</html>

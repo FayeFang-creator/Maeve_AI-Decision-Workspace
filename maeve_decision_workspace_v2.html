@@ -72,16 +72,28 @@
   .stages .now{color:var(--teal);font-weight:600}
   .stages .now::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal)}
 
+  /* Position at a glance: persistent context in the inspector */
+  .pos-panel{flex:none;padding:16px 24px 14px;border-bottom:1px solid var(--line-soft);background:#fff}
+  .pos-head{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .pos-item{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+  .pos-item:nth-last-child(-n+2){border-bottom:0}
+  .pos-item .k{color:var(--muted);white-space:nowrap}
+  .pos-item .v{font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pos-item.changed{background:var(--amber-bg);margin:0 -6px;padding:6px}
+  .pos-item.changed .k{color:var(--amber)}
+  .pos-grid .src::after{bottom:auto;top:calc(100% + 8px);right:0;left:auto}
   .ws-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,420px);min-height:0}
-  .ws-main{overflow:auto;display:flex;align-items:center;padding:36px 56px;
+  .ws-main{overflow:auto;display:flex;align-items:flex-start;padding:36px 56px 40px;
     background:radial-gradient(700px 360px at 30% 20%,rgba(92,139,158,.10),rgba(255,255,255,0) 70%)}
-  .ws-main-inner{max-width:580px;width:100%}
+  .ws-main-inner{max-width:660px;width:100%;margin:auto 0}
   .label{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
   .verdict{font-family:var(--serif);font-weight:400;font-size:64px;line-height:1.02;letter-spacing:-.035em;margin:10px 0 14px;
     background:linear-gradient(69deg,var(--teal-2) 8%,var(--teal) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;transition:opacity .2s}
   .verdict.swap{opacity:0}
   .why{margin:0;color:var(--muted);font-size:16px;max-width:46ch}
-  .alts{margin-top:10px;font-size:13px;color:var(--faint)}
+  .alts{margin-top:10px;font-size:13px;color:var(--faint);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+  .alts .btn.link{font-size:13px}
   .ready{margin-top:28px;display:flex;align-items:center;gap:14px;padding:14px 14px 14px 18px;border-radius:12px}
   .ready.amber{background:var(--amber-bg)}
   .ready.teal{background:var(--teal-bg)}
@@ -142,6 +154,29 @@
   .more-body{display:none;margin-top:4px}
   .more-body.show{display:block}
   .whatif{font-size:11.5px;color:var(--amber);background:var(--amber-bg);border-radius:99px;padding:1px 8px;margin-left:8px;font-weight:500}
+
+  /* Options overview */
+  .opts{margin-top:36px;padding-top:24px;border-top:1px solid var(--line-soft)}
+  .opts-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .opts-head .hint{font-size:13px;color:var(--faint)}
+  .opt-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .option{border:1px solid var(--line);border-radius:12px;background:#fff}
+  .option.lead{border-color:var(--teal-2);box-shadow:0 0 0 1px var(--teal-2) inset}
+  .option summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+  .option summary::-webkit-details-marker{display:none}
+  .o-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .o-name{font-weight:500}
+  .o-sub{font-size:13px;color:var(--muted);line-height:1.4}
+  .o-status{font-size:12px;font-weight:500;padding:2px 9px;border-radius:99px;white-space:nowrap;background:var(--fill);color:var(--muted)}
+  .o-status.lead{background:var(--teal-bg);color:var(--teal)}
+  .o-status.close{background:var(--amber-bg);color:var(--amber)}
+  .o-status.no{background:#f6eded;color:#9a4a4a}
+  .o-body{padding:2px 14px 14px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .o-body h4{margin:0 0 4px;font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .o-body ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.45}
+  .o-body li + li{margin-top:4px}
+  .o-chev{font-size:12px;color:var(--faint);transition:transform .15s}
+  .option[open] .o-chev{transform:rotate(180deg)}
 
   /* Sources (Trust lens) */
   .src-filter{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
@@ -209,6 +244,8 @@
     .ws-head{flex-direction:column;align-items:flex-start;gap:8px;padding:16px 18px 12px}
     h1{font-size:22px}
     .ws-body{display:block}
+    .o-body{grid-template-columns:1fr}
+    .ws-main-inner{margin:0}
     .ws-main{padding:28px 20px}
     .verdict{font-size:42px}
     .ready{flex-direction:column;align-items:stretch}
@@ -274,14 +311,24 @@
               </div>
               <div class="flip" id="flip" role="status"></div>
               <div class="calc" id="calc"></div>
+
+              <section class="opts" id="opts" aria-label="Options">
+                <div class="opts-head"><span class="label">Your 4 options · best fit first</span><span class="hint">Open one to see pros &amp; cons</span></div>
+                <div class="opt-list" id="optList"></div>
+                <p class="dnote">Amber numbers are Maeve estimates; they become exact once you run the calculation.</p>
+              </section>
             </div>
           </section>
 
           <!-- Inspector: one layer at a time -->
           <section class="ws-side">
+            <div class="pos-panel">
+              <div class="pos-head">Your position at a glance</div>
+              <div class="pos-grid" id="pos"></div>
+            </div>
             <div class="depth-tabs" role="tablist">
-              <button class="dtab" role="tab" type="button" data-p="drivers" aria-selected="true">What could change it</button>
-              <button class="dtab" role="tab" type="button" data-p="sources" aria-selected="false">What it's built on</button>
+              <button class="dtab" role="tab" type="button" data-p="drivers" aria-selected="true">Tipping points</button>
+              <button class="dtab" role="tab" type="button" data-p="sources" aria-selected="false">How sure is this?</button>
             </div>
             <div class="dpane" id="p-drivers" role="tabpanel">
               <div class="driver">
@@ -468,7 +515,9 @@
     // alternatives: one quiet line, no false-precision scores
     const lead = gap>=15 ? 'Clear lead' : gap>=6 ? 'Narrow lead' : 'Toss-up';
     const next = OPT[ranked[1][0]].toLowerCase();
-    $('alts').textContent = `${gap<6 ? 'Toss-up with '+next : lead+' over '+next} · ${OPT[ranked[2][0]].toLowerCase()} is less suited`;
+    $('alts').innerHTML = `<span>${gap<6 ? 'Toss-up with '+next : lead+' over '+next}</span><button class="btn link" type="button" id="cmpBtn">Compare all 4 options ↓</button>`;
+    $('cmpBtn').onclick = ()=> $('opts').scrollIntoView({behavior:'smooth', block:'start'});
+    state.ranked = ranked;
 
     // readiness: maturity stated before the user acts
     const u = unknowns(), ready=$('ready'), btn=$('readyBtn'), copy=$('readyCopy');
@@ -492,6 +541,64 @@
 
     renderDrivers();
     renderSources();
+    renderPosition();
+    renderOptions();
+  }
+
+  function renderPosition(){
+    const k = n => '$'+Math.round(n)+'k';
+    const items = [
+      ['Vested ISOs', src('verified','32,000','Carta import · synced Oct 1')],
+      ['Strike', src('verified','$3.80','Grant document')],
+      ['409A', src(state.v409a===PROFILE.v409a?'verified':'assumed','$'+state.v409a.toFixed(2), state.v409a===PROFILE.v409a?'Carta · valuation Jun 30, 2026':'What-if value'), state.v409a!==PROFILE.v409a],
+      ['Spread / share', src('calculated','$'+(state.v409a-3.8).toFixed(2),'Calculated · 409A − strike'), state.v409a!==PROFILE.v409a],
+      ['Still to vest', src('verified','18,000','Carta · vests over 2 years')],
+      ['Savings', src('assumed','$120k','You told Maeve')],
+      ['Free after buffer', src('calculated',k(120-state.cash),'Calculated · savings − cash you keep'), state.cash!==PROFILE.cash],
+      ['Income', src('verified','$'+state.salary+'k', state.salary===PROFILE.salary?'Your tax profile':'What-if value'), state.salary!==PROFILE.salary]
+    ];
+    $('pos').innerHTML = items.map(i=>`<div class="pos-item${i[2]?' changed':''}"><span class="k">${i[0]}</span><span class="v">${i[1]}</span></div>`).join('');
+  }
+
+  function renderOptions(){
+    const ranked = state.ranked, top = ranked[0][1];
+    const status = key => {
+      const i = ranked.findIndex(r=>r[0]===key), d = top - ranked[i][1];
+      return i===0 ? ['lead','Current direction'] : d<6 ? ['close','Close behind'] : ['', d<15 ? 'Behind' : 'Less suited'];
+    };
+    const free = 120 - state.cash, spread = 32000*(state.v409a-3.8);
+    const opts = [
+      { key:'all', name:'Exercise everything now', st:['no','Not feasible'],
+        sub:`Needs ~$190k+ in cash; you have ${'$'+free+'k'} free.`,
+        pros:[`Starts the 1-year holding clock on all 32,000 shares`, `Long-term capital gains on the full position if the company exits well`],
+        cons:[`Strike cost alone is ${src('calculated','$121,600','Secfi engine · 32,000 × $3.80')}`, `Plus AMT of roughly ${src('estimated','$70–100k','Maeve estimate · not engine-calculated')} on a ${src('calculated','$'+Math.round(spread/1000)+'k','Secfi engine · ISO spread')} spread`, `Uses all your savings and more`] },
+      { key:'partial', name:'Exercise a portion now',
+        sub:'Exercise just below your AMT crossover; repeat yearly.',
+        pros:[`Starts the clock on a tranche with modest cash`, `Stays under the AMT threshold, so little or no extra tax`, `Repeatable each year as more shares vest`],
+        cons:[`AMT-free amount is still an estimate: ${src('estimated','~3,000–8,000 shares','Maeve estimate · needs filing status')}`, `Remaining shares get more expensive if the 409A rises`] },
+      { key:'wait', name:'Wait for more certainty',
+        sub:'Hold until a tender offer or IPO date is clearer.',
+        pros:[`No cash at risk today`, `Better timing if a tender offer or IPO date firms up`],
+        cons:[`A rising 409A makes exercise and AMT more expensive`, `If you leave the company, you typically have only 90 days to exercise`] },
+      { key:'finance', name:'Use non-recourse financing',
+        sub:'Secfi covers strike and taxes; repay only at exit.',
+        pros:[`Keeps your home-purchase fund untouched`, `Strike and AMT covered; owe nothing on that portion if there is no exit`, `Starts the holding clock on more shares`],
+        cons:[`You share part of the upside with the financing provider`, `A move to the Netherlands may add steps`] }
+    ];
+    // Order by fit: model ranking first, the infeasible option always last
+    const order = [...ranked.map(r=>r[0]), 'all'];
+    opts.sort((a,b)=> order.indexOf(a.key) - order.indexOf(b.key));
+    const isOpen = k => state.openOpts ? state.openOpts.has(k) : k===ranked[0][0];
+    $('optList').innerHTML = opts.map(o=>{
+      const [cls,label] = o.st || status(o.key);
+      return `<details class="option${cls==='lead'?' lead':''}"${isOpen(o.key)?' open':''} data-k="${o.key}">
+        <summary><span class="o-top"><span class="o-name">${o.name}</span><span style="display:flex;gap:8px;align-items:center"><span class="o-status ${cls}">${label}</span><span class="o-chev">▾</span></span></span><span class="o-sub">${o.sub}</span></summary>
+        <div class="o-body"><div><h4>Pros</h4><ul>${o.pros.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h4>Cons</h4><ul>${o.cons.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
+      </details>`;
+    }).join('');
+    $('optList').querySelectorAll('details').forEach(d=> d.addEventListener('toggle', ()=>{
+      state.openOpts = new Set([...$('optList').querySelectorAll('details[open]')].map(x=>x.dataset.k));
+    }));
   }
 
   function renderDrivers(){
@@ -566,7 +673,7 @@
 
   function showPane(p){
     document.querySelectorAll('.dtab').forEach(t=>t.setAttribute('aria-selected', t.dataset.p===p));
-    $('p-drivers').hidden = p!=='drivers'; $('p-sources').hidden = p!=='sources';
+    ['drivers','sources'].forEach(k=> $('p-'+k).hidden = p!==k);
   }
   document.querySelectorAll('.dtab').forEach(t=> t.onclick=()=>showPane(t.dataset.p));
 
