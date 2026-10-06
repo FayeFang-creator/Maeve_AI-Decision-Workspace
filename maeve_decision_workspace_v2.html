@@ -59,9 +59,9 @@
   .pill:hover{background:rgba(91,102,111,.2)}
 
   /* ---------- Workspace: one panel fills the main area ---------- */
-  .stage{flex:none;display:flex;flex-direction:column;padding:16px 20px 8px;height:calc(100vh - 68px);min-height:620px}
+  .stage{flex:none;display:flex;gap:16px;padding:16px 20px;height:calc(100vh - 68px);min-height:620px}
   .panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
-  .ws{flex:1;display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0}
+  .ws{flex:1;min-width:0;display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
   .ws-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:16px 28px 14px;border-bottom:1px solid var(--line-soft)}
   .eyebrow{font-size:12.5px;color:var(--muted)}
   h1{font-family:var(--serif);font-weight:400;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin:2px 0 0}
@@ -110,7 +110,6 @@
   .btn.link:hover{text-decoration:underline}
 
   .ws-side{border-left:1px solid var(--line-soft);display:flex;flex-direction:column;min-height:0;background:#fcfcfc}
-  .ws-foot{border-top:1px solid var(--line-soft);padding:12px 20px 14px;background:#fff}
   .flip{display:none;align-items:center;gap:8px;margin-top:12px;padding:10px 14px;border-radius:10px;border:1px solid #f1e3c8;color:var(--amber);font-size:13.5px;flex-wrap:wrap}
   .flip.show{display:flex;animation:in .3s ease}
   .flip b{font-weight:600}
@@ -195,6 +194,54 @@
   .src::after{content:attr(data-tip);position:absolute;right:0;bottom:calc(100% + 8px);background:#2b2d31;color:#fff;font-size:12.5px;line-height:1.35;white-space:nowrap;padding:7px 12px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:30}
   .src:hover::after,.src:focus::after{opacity:1}
 
+  /* ---------- Chat (left of the workspace, like a canvas) ---------- */
+  .chat{display:none;width:360px;flex:none;flex-direction:column;min-height:0}
+  .chat-open .chat{display:flex}
+  .chat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 10px}
+  .chat-head b{font-weight:500;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .chat-head span{font-size:12px;color:var(--faint);display:block}
+  .icon-btn{border:0;background:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted);flex:none}
+  .icon-btn:hover{background:var(--fill)}
+  .chat-log{flex:1;min-height:0;overflow:auto;padding:4px 6px 12px 4px;display:flex;flex-direction:column;gap:16px;font-size:14.5px;line-height:1.55}
+  .msg.user{align-self:flex-end;max-width:90%;background:var(--fill-2);border-radius:14px 14px 4px 14px;padding:10px 14px}
+  .msg.user.long p{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+  .msg.user.long.expanded p{display:block}
+  .msg.user .more{border:0;background:none;padding:0;margin-top:4px;color:var(--teal);font-size:13px}
+  .msg p{margin:0}
+  .msg.maeve p + p,.msg.maeve p + table,.msg.maeve table + p,.msg.maeve p + ol,.msg.maeve ol + p,.msg.maeve p + .ws-ref{margin-top:10px}
+  .msg.maeve h5{margin:12px 0 4px;font-size:14px;font-weight:600}
+  .msg.maeve ol{margin:0;padding-left:20px}
+  .msg.maeve li + li{margin-top:6px}
+  .msg.maeve table{width:100%;border-collapse:collapse;font-size:13px}
+  .msg.maeve td{padding:5px 0;border-bottom:1px solid var(--line-soft)}
+  .msg.maeve td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .ws-ref{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;box-shadow:0 2px 11px rgba(21,96,121,.06)}
+  .ws-ref:hover{border-color:var(--teal-2)}
+  .ws-ref i{width:34px;height:34px;border-radius:9px;background:var(--teal-bg);display:grid;place-items:center;flex:none}
+  .ws-ref b{display:block;font-weight:500;font-size:14px}
+  .ws-ref span{font-size:12.5px;color:var(--muted)}
+  .msg.event{align-self:center;font-size:12.5px;color:var(--muted);background:#fff;border:1px solid var(--line-soft);border-radius:99px;padding:4px 12px;display:flex;gap:6px;align-items:center;animation:in .3s ease}
+  .msg.event::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal-2)}
+  .typing{display:flex;gap:4px;padding:6px 0}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:blink 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+  .chat-foot{padding-top:10px}
+  .ws.flash{animation:flash .9s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(92,139,158,.5)}100%{box-shadow:0 0 0 14px rgba(92,139,158,0)}}
+
+  /* Compact Secfi nav while chatting */
+  .chat-open{grid-template-columns:68px minmax(0,1fr)}
+  .chat-open .side{padding:16px 10px}
+  .chat-open .wordmark{font-size:0;margin:0 0 22px;text-align:center}
+  .chat-open .wordmark::first-letter{font-size:30px}
+  .chat-open .nav a{font-size:0;justify-content:center;padding:8px}
+  .chat-open .subnav{display:none}
+  .chat-open .side-foot{font-size:0;justify-content:center;padding:6px 0}
+  .chat-open .ws-main{padding:32px 36px 36px}
+  .chat-open .verdict{font-size:52px}
+  .pill[aria-pressed="true"]{background:var(--ink);color:#fff}
+
   /* Composer */
     .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
   .chip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;font-size:14px;white-space:nowrap}
@@ -204,7 +251,7 @@
   .composer input::placeholder{color:var(--faint)}
   .send{width:32px;height:32px;border-radius:8px;border:0;background:#7d858c;display:grid;place-items:center}
   .send svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.6}
-  .disclaimer{font-size:12px;color:var(--faint);text-align:center;margin-top:8px}
+  .disclaimer{font-size:11.5px;color:var(--faint);text-align:center;margin-top:8px;line-height:1.4}
 
   /* Modal */
   .scrim{position:fixed;inset:0;background:rgba(41,42,45,.32);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
@@ -251,7 +298,8 @@
     .ready{flex-direction:column;align-items:stretch}
     .ws-side{border-left:0;border-top:1px solid var(--line-soft)}
     .dpane{overflow:visible;padding:4px 18px 18px}
-    .ws-foot{position:sticky;bottom:0;padding:10px 12px 12px}
+    .chat-open{grid-template-columns:1fr}
+    .chat{position:fixed;inset:68px 0 0 0;width:auto;z-index:40;background:#fff;padding:12px}
     .calc-row{gap:20px}
   }
 </style>
@@ -278,7 +326,7 @@
     <header class="topbar">
       <div class="crumbs"><span class="hide-sm">Maeve</span><i class="hide-sm">›</i><span class="hide-sm">Decisions</span><i class="hide-sm">›</i><b>Exercise my vested ISOs?</b></div>
       <div style="display:flex;gap:8px">
-        <button class="pill" id="openChat" type="button"><span class="lbl">Open in chat</span>
+        <button class="pill" id="openChat" type="button" aria-pressed="false"><span class="lbl">Chat</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
         <button class="pill" id="snapBtn" type="button"><span class="lbl">Save decision</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
@@ -286,7 +334,30 @@
     </header>
 
     <div class="stage">
-      <article class="panel ws">
+      <!-- Chat: the conversation this workspace was built from -->
+      <aside class="chat" id="chat" aria-label="Chat with Maeve">
+        <div class="chat-head">
+          <div style="min-width:0"><b>ISO exercise strategy</b><span>Chat with Maeve · Oct 4</span></div>
+          <button class="icon-btn" id="closeChat" type="button" aria-label="Hide chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+        </div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-foot">
+        <div class="chips" id="chips">
+          <button class="chip" type="button" data-q="move">What if I move in 6 months?</button>
+          <button class="chip" type="button" data-q="cash">What if I need $95k in cash?</button>
+          <button class="chip" type="button" data-q="409a">What if the 409A jumps to $24?</button>
+          <button class="chip" type="button" data-q="tender">What if a tender offer is confirmed?</button>
+        </div>
+        <form class="composer" id="composer">
+          <input id="ask" placeholder="Ask me anything about equity and taxes…" aria-label="Ask Maeve" />
+          <button class="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+        </form>
+        <div class="disclaimer">Concept prototype · fictional data and a heuristic model. Not tax, legal or investment advice.</div>
+        </div>
+      </aside>
+
+      <article class="panel ws" id="ws">
         <header class="ws-head">
           <div>
             <div class="eyebrow">Decision workspace · built from your chat on Oct 4</div>
@@ -380,21 +451,7 @@
           </section>
         </div>
 
-        <footer class="ws-foot">
-        <div class="chips" id="chips">
-          <button class="chip" type="button" data-q="move">What if I move in 6 months?</button>
-          <button class="chip" type="button" data-q="cash">What if I need $95k in cash?</button>
-          <button class="chip" type="button" data-q="409a">What if the 409A jumps to $24?</button>
-          <button class="chip" type="button" data-q="tender">What if a tender offer is confirmed?</button>
-        </div>
-        <form class="composer" id="composer">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5c8b9e" stroke-width="1.5"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6zM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg>
-          <input id="ask" placeholder="Ask Maeve about this decision…" aria-label="Ask Maeve" />
-          <button class="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
-        </form>
-        </footer>
       </article>
-      <div class="disclaimer">Concept prototype with fictional data and a heuristic model. Not tax, legal or investment advice.</div>
     </div>
   </div>
 </div>
@@ -507,6 +564,7 @@
       $('flip').classList.add('show');
       $('undoFlip').onclick = reset;
       state.calculated = false;
+      chatEvent(`Workspace updated · ${lastChange?lastChange+' changed, ':''}now ${OPT[winner].toLowerCase()}`);
     } else if(!lastWinner){ verdict.textContent = OPT[winner]; }
     if(!isWhatIf()) $('flip').classList.remove('show');
     lastWinner = winner;
@@ -713,6 +771,7 @@
     state.filing=pending.filing; state.move=pending.move;
     state.confirmed={ filing:true, move:pending.move!=='unknown' };
     lastChange='your answers'; closeAll(); render();
+    chatEvent(`You answered: filing ${state.filing==='joint'?'jointly':'single'} · move ${MOVE_LABEL[state.move].toLowerCase()}`);
     toast(unknowns().length ? 'Updated. The move date is still open.' : 'Updated. Nothing left that can flip the direction.');
   };
 
@@ -745,18 +804,61 @@
   $('vfiling').onclick = segHandler('filing','filing status');
   $('moreBtn').onclick = e=>{ const open=$('moreBody').classList.toggle('show'); e.target.setAttribute('aria-expanded',open); e.target.textContent = open?'− Hide precision inputs':'+ 3 inputs that only refine precision'; };
   $('snapBtn').onclick = openSnap;
-  $('openChat').onclick = ()=>toast('Opens the original chat this workspace was built from.');
+  // ---------- Chat ----------
+  const shell = document.querySelector('.shell'), log = $('chatLog');
+  function setChat(open){ shell.classList.toggle('chat-open', open); $('openChat').setAttribute('aria-pressed', open); if(open) log.scrollTop = log.scrollHeight; }
+  $('openChat').onclick = ()=> setChat(!shell.classList.contains('chat-open'));
+  $('closeChat').onclick = ()=> setChat(false);
 
-  // Chat chips drive the workspace
+  function addMsg(cls, html){
+    const d=document.createElement('div'); d.className='msg '+cls; d.innerHTML=html; log.appendChild(d);
+    log.scrollTop = log.scrollHeight; return d;
+  }
+  function chatEvent(text){ if(log) addMsg('event', text); }
+  function maeveSays(html, after){
+    const t = addMsg('maeve','<div class="typing"><i></i><i></i><i></i></div>');
+    setTimeout(()=>{ t.innerHTML = html; log.scrollTop = log.scrollHeight; after && after(); }, 750);
+  }
+  const flashWs = ()=>{ const w=$('ws'); w.classList.remove('flash'); void w.offsetWidth; w.classList.add('flash'); };
+
+  // Earlier conversation (condensed from the real Maeve chat)
+  const PROMPT = `I have 32,000 vested ISOs with a $3.80 strike price and a current 409A of $14.50. I also have another 18,000 options that will vest over the next two years.<br><br>My company is still private. There are rumors of a secondary tender offer next year, but nothing is confirmed, and I think an IPO could happen sometime between 2028 and 2031.<br><br>I earn about $260,000 a year and currently live in California, but I may move to the Netherlands next year. I have around $120,000 in liquid savings, and I want to keep at least $70,000 available because I may buy a home within the next 18 months.<br><br>I'm trying to decide whether I should: 1) exercise all of my vested options now, 2) exercise only part of them, 3) wait until there is more certainty around an exit, or 4) use financing to exercise without using so much of my cash.<br><br>What would you recommend, what assumptions does your recommendation depend on most, and under what conditions would your recommendation change?`;
+  const u1 = addMsg('user long', `<p>${PROMPT}</p><button class="more" type="button">Show more</button>`);
+  u1.querySelector('.more').onclick = e=>{ const x=u1.classList.toggle('expanded'); e.target.textContent = x?'Show less':'Show more'; };
+  addMsg('maeve', `<p>This is a substantive situation with several moving parts, so let me work through the core trade-offs first.</p>
+    <h5>Your position at a glance</h5>
+    <table><tr><td>Vested ISOs</td><td>32,000</td></tr><tr><td>Spread per share</td><td>$10.70</td></tr><tr><td>Available cash after home buffer</td><td>~$50,000</td></tr></table>
+    <p>Exercising all 32,000 shares would create <b>$342,400 of AMT income</b> and likely an AMT bill of ${src('estimated','$60k–90k','Maeve estimate · not engine-calculated')}, which is more than you have available.</p>
+    <p><b>Exercising a portion</b> makes the most sense: stay just below your AMT crossover, roughly ${src('estimated','3,000–8,000 shares','Maeve estimate · needs filing status')} this year, and repeat as the 409A rises.</p>
+    <p>I've laid this out as a decision you can explore:</p>
+    <button class="ws-ref" type="button" data-open-ws><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#004250" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14 4v16"/></svg></i><span><b>Should I exercise my vested options now?</b><span>Decision workspace · Partial exercise · Preliminary</span></span></button>`);
+  addMsg('user', '<p>Which of these assumptions actually matter most?</p>');
+  addMsg('maeve', `<p>Good instinct. Here they are, ranked by how much they could shift the recommendation:</p>
+    <ol><li><b>Filing status + income + deductions.</b> Together they set your AMT crossover, i.e. how many shares you can exercise this year without AMT.</li>
+    <li><b>Netherlands move timing.</b> The biggest strategic wildcard: exercising before or after the move changes which country taxes the gain.</li>
+    <li><b>Prior AMT credit.</b> Refines the precision of the calculation, but won't change the direction.</li></ol>
+    <p>I've pinned the first two as open questions in the workspace, and marked where each input would tip the decision.</p>`);
+  log.addEventListener('click', e=>{ if(e.target.closest('[data-open-ws]')){ flashWs(); if(innerWidth<=860) setChat(false); } });
+  setChat(innerWidth > 1100);
+
+  // Chat drives the workspace: answers land in the chat, changes land in the workspace
+  const REPLIES = {
+    move:['If you move within 6 months, I would pause before exercising. The order of exercise, move and sale decides which country taxes the gain, so that needs a cross-border review first. I\'ve set the move to "within 6 months" in the workspace.', ()=>setVal('move','soon','move date')],
+    cash:['Keeping $95k untouched leaves only $25k to work with. At that point non-recourse financing is the better route: it keeps the upside without touching your home fund. Applied as a what-if.', ()=>setVal('cash',95,'cash reserve')],
+    '409a':['At $24 the spread per share nearly doubles to $20.20, and so does your AMT exposure. Waiting gets stronger. Applied as a what-if, so you can reset to your profile anytime.', ()=>setVal('v409a',24,'409A')],
+    tender:['I don\'t have tender terms yet. Once it\'s announced, I\'ll pull in the price and window and recalculate this decision for you. Until then, it stays an open question in the workspace.', null]
+  };
   $('chips').onclick = e=>{
     const c=e.target.closest('.chip'); if(!c) return;
-    const act = { tender:()=>toast('Tender terms are unknown. Maeve would pull them in once announced and recalculate.'),
-       move:()=>setVal('move','soon','move date'),
-       cash:()=>setVal('cash',95,'cash reserve'),
-       '409a':()=>setVal('v409a',24,'409A') }[c.dataset.q];
-    showPane('drivers'); act();
+    addMsg('user', `<p>${c.textContent}</p>`);
+    const [text, act] = REPLIES[c.dataset.q];
+    maeveSays(`<p>${text}</p>`, ()=>{ if(act){ showPane('drivers'); act(); flashWs(); } });
   };
-  $('composer').onsubmit = e=>{ e.preventDefault(); if($('ask').value.trim()){ toast('In the real product this goes to Maeve with the workspace as context.'); $('ask').value=''; } };
+  $('composer').onsubmit = e=>{
+    e.preventDefault(); const q=$('ask').value.trim(); if(!q) return;
+    addMsg('user', `<p>${q.replace(/</g,'&lt;')}</p>`); $('ask').value='';
+    maeveSays('<p>Noted. I\'ll use this workspace as context for that. (In this prototype, try one of the suggested questions to see the workspace respond.)</p>');
+  };
 
   render();
 })();

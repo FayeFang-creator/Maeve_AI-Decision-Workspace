@@ -25,7 +25,7 @@ The layout borrows the agent-workspace frame that Secfi's users (engineers, PMs 
 ## Design principles
 
 1. **Simple by default, inspectable on demand.** Show one direction first; reasons, options and sources sit one layer down.
-2. **Show the boundary, not just the outcome.** Say *"Above $22, waiting wins"* instead of *"83% confident"*.
+2. **Show the boundary, not just the outcome.** Tell users where the answer would change, and why: *"Above a $22 409A, waiting wins."*
 3. **Every number says where it came from.** Verified, calculated, assumed and AI-estimated values never look the same.
 4. **Ask only what can flip the answer.** Inputs that only refine precision can wait.
 
