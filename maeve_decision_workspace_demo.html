@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maeve Decision Workspace — Concept Demo</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --panel:#ffffff;
+      --text:#162033;
+      --muted:#6d778b;
+      --border:#e3e7ef;
+      --accent:#4657d6;
+      --accent-2:#eef0ff;
+      --good:#16855b;
+      --warn:#b97415;
+      --danger:#b84343;
+      --shadow:0 14px 40px rgba(31,43,78,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    button,input,select{font:inherit}
+    .app{
+      max-width:1440px;
+      margin:0 auto;
+      padding:26px;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:20px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+      font-weight:760;
+      letter-spacing:-.02em;
+    }
+    .logo{
+      width:38px;height:38px;border-radius:12px;
+      display:grid;place-items:center;
+      background:linear-gradient(145deg,#1f2c58,#5968e8);
+      color:white;
+      box-shadow:var(--shadow);
+      font-weight:800;
+    }
+    .eyebrow{
+      font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;
+    }
+    .status-pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);
+      color:var(--muted);font-size:13px;
+    }
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+    .hero{
+      background:linear-gradient(140deg,#17213f 0%,#26346a 56%,#39489b 100%);
+      color:#fff;
+      border-radius:24px;
+      padding:28px;
+      display:grid;
+      grid-template-columns:1.5fr .8fr;
+      gap:24px;
+      margin-bottom:20px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:after{
+      content:"";
+      position:absolute;
+      width:360px;height:360px;border-radius:50%;
+      right:-120px;top:-140px;
+      background:rgba(255,255,255,.06);
+    }
+    .hero h1{
+      font-size:34px;line-height:1.05;margin:6px 0 10px;letter-spacing:-.04em;
+      max-width:740px;
+    }
+    .hero p{margin:0;color:rgba(255,255,255,.78);max-width:760px;line-height:1.55}
+    .hero-side{
+      display:flex;flex-direction:column;justify-content:center;gap:12px;
+      position:relative;z-index:1;
+    }
+    .journey{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+      margin-top:18px;
+    }
+    .step{
+      font-size:12px;padding:7px 10px;border-radius:999px;
+      background:rgba(255,255,255,.1);color:rgba(255,255,255,.72);
+      border:1px solid rgba(255,255,255,.12)
+    }
+    .step.active{background:#fff;color:#20305f}
+    .arrow{opacity:.4}
+    .hero-stat{
+      background:rgba(255,255,255,.09);
+      border:1px solid rgba(255,255,255,.14);
+      padding:16px;border-radius:16px;
+      backdrop-filter:blur(8px)
+    }
+    .hero-stat .label{font-size:12px;color:rgba(255,255,255,.66)}
+    .hero-stat .value{font-size:22px;font-weight:760;margin-top:3px}
+    .grid{
+      display:grid;
+      grid-template-columns:360px minmax(0,1fr);
+      gap:20px;
+      align-items:start;
+    }
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .panel-header{
+      padding:18px 20px 12px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    }
+    .panel-header h2,.panel-header h3{margin:0;font-size:16px;letter-spacing:-.015em}
+    .panel-header p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+    .controls{padding:6px 20px 20px}
+    .control{
+      padding:16px 0;border-top:1px solid var(--border)
+    }
+    .control:first-child{border-top:0}
+    .control-row{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      margin-bottom:10px;
+    }
+    .control-title{font-size:14px;font-weight:650}
+    .impact{
+      font-size:11px;border-radius:999px;padding:5px 8px;background:#f3f4f8;color:var(--muted)
+    }
+    .impact.high{background:#fff1ea;color:#9b4d1a}
+    .impact.medium{background:#fff8e7;color:#8a6812}
+    .impact.low{background:#edf7f2;color:#31705a}
+    .value-badge{
+      font-variant-numeric:tabular-nums;
+      font-size:13px;color:var(--accent);font-weight:700
+    }
+    input[type="range"]{width:100%;accent-color:var(--accent)}
+    select{
+      width:100%;border:1px solid var(--border);background:#fff;
+      border-radius:12px;padding:11px 12px;color:var(--text)
+    }
+    .micro{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.35}
+    .maincol{display:flex;flex-direction:column;gap:20px}
+    .recommend{
+      padding:22px;
+      display:grid;grid-template-columns:1.15fr .85fr;gap:22px;
+    }
+    .rec-kicker{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .rec-title{font-size:30px;line-height:1.08;margin:7px 0 10px;letter-spacing:-.04em}
+    .rec-copy{color:var(--muted);line-height:1.55;margin:0;max-width:680px}
+    .reason-list{display:grid;gap:10px;margin-top:18px}
+    .reason{
+      display:flex;gap:10px;align-items:flex-start;
+      padding:12px 13px;background:#f8f9fc;border-radius:12px
+    }
+    .reason strong{font-size:13px}
+    .reason span{font-size:12px;color:var(--muted);display:block;margin-top:2px;line-height:1.35}
+    .icon{
+      width:28px;height:28px;border-radius:9px;background:var(--accent-2);display:grid;place-items:center;
+      color:var(--accent);font-weight:800;flex:0 0 auto
+    }
+    .scorebox{
+      background:#f8f9fc;border:1px solid var(--border);border-radius:16px;padding:16px;
+    }
+    .scorebox h4{margin:0 0 12px;font-size:13px}
+    .score-row{margin:13px 0}
+    .score-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+    .bar{height:9px;background:#e7eaf1;border-radius:999px;overflow:hidden}
+    .fill{height:100%;border-radius:999px;background:var(--accent);transition:width .25s ease}
+    .fill.alt{background:#73809b}.fill.warn{background:#bd7a2d}
+    .confidence{
+      margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)
+    }
+    .confidence b{color:var(--text)}
+    .section-grid{
+      display:grid;grid-template-columns:1fr 1fr;gap:20px
+    }
+    .driver-list{padding:4px 20px 20px}
+    .driver{
+      display:grid;grid-template-columns:150px 1fr auto;gap:12px;align-items:center;
+      padding:14px 0;border-top:1px solid var(--border)
+    }
+    .driver:first-child{border-top:0}
+    .driver-name{font-size:13px;font-weight:650}
+    .driver-sub{font-size:11px;color:var(--muted);margin-top:3px}
+    .driver-track{height:8px;background:#eef0f4;border-radius:999px;overflow:hidden}
+    .driver-track span{display:block;height:100%;border-radius:999px;background:#6d78dc;transition:width .25s ease}
+    .driver-outcome{font-size:12px;color:var(--muted);white-space:nowrap}
+    .boundary-list{padding:4px 20px 20px;display:grid;gap:10px}
+    .boundary{
+      display:flex;gap:12px;align-items:flex-start;padding:13px;
+      border:1px solid var(--border);border-radius:13px;background:#fff
+    }
+    .boundary .tag{
+      flex:0 0 auto;font-size:11px;font-weight:700;padding:5px 7px;border-radius:8px;background:#f4f5f9
+    }
+    .boundary b{font-size:13px}
+    .boundary p{font-size:12px;color:var(--muted);margin:3px 0 0;line-height:1.4}
+    .decision-map{padding:0 20px 20px}
+    .map{
+      min-height:190px;border:1px solid var(--border);border-radius:16px;
+      position:relative;overflow:hidden;background:
+        linear-gradient(90deg,rgba(70,87,214,.06) 1px,transparent 1px),
+        linear-gradient(rgba(70,87,214,.06) 1px,transparent 1px),
+        #fbfcff;
+      background-size:32px 32px;
+    }
+    .zone{
+      position:absolute;border-radius:16px;padding:12px;font-size:12px;font-weight:700;
+      border:1px solid rgba(0,0,0,.05)
+    }
+    .zone.partial{left:8%;top:14%;width:48%;height:62%;background:rgba(70,87,214,.10);color:#3948b0}
+    .zone.wait{right:7%;top:9%;width:32%;height:38%;background:rgba(189,122,45,.12);color:#8b5a1f}
+    .zone.finance{right:6%;bottom:10%;width:38%;height:34%;background:rgba(45,126,96,.11);color:#2b7158}
+    .you{
+      position:absolute;width:18px;height:18px;border-radius:50%;background:#11192e;border:4px solid #fff;
+      box-shadow:0 0 0 2px #11192e,0 6px 18px rgba(17,25,46,.25);
+      transition:left .25s ease,top .25s ease;
+    }
+    .axisx,.axisy{position:absolute;font-size:10px;color:var(--muted)}
+    .axisx{bottom:6px;left:50%;transform:translateX(-50%)}
+    .axisy{left:7px;top:50%;transform:rotate(-90deg) translateX(-50%);transform-origin:left top}
+    .actions{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:18px
+    }
+    .btn{
+      border:0;border-radius:12px;padding:11px 14px;font-weight:700;cursor:pointer
+    }
+    .btn.primary{background:var(--accent);color:#fff}
+    .btn.secondary{background:#f1f3f8;color:var(--text)}
+    .btn:focus{outline:3px solid rgba(70,87,214,.2);outline-offset:2px}
+    .drawer{
+      display:none;margin-top:14px;padding:14px;border-radius:13px;border:1px dashed #cfd5e2;background:#fbfcfe;
+      color:var(--muted);font-size:13px;line-height:1.5
+    }
+    .drawer.show{display:block}
+    .footer-note{
+      margin:18px 2px 6px;color:var(--muted);font-size:11px;line-height:1.5
+    }
+    .mini-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+    @media (max-width:1050px){
+      .grid{grid-template-columns:1fr}
+      .controls{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+      .control:nth-child(2){border-top:0}
+    }
+    @media (max-width:780px){
+      .app{padding:14px}
+      .hero{grid-template-columns:1fr}
+      .hero h1{font-size:28px}
+      .recommend{grid-template-columns:1fr}
+      .section-grid{grid-template-columns:1fr}
+      .controls{grid-template-columns:1fr}
+      .control:nth-child(2){border-top:1px solid var(--border)}
+      .driver{grid-template-columns:120px 1fr}
+      .driver-outcome{grid-column:1/-1}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">M</div>
+        <div>
+          <div>Maeve</div>
+          <div class="eyebrow">Decision workspace concept</div>
+        </div>
+      </div>
+      <div class="status-pill"><span class="dot"></span> Directional model · not financial advice</div>
+    </div>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow" style="color:rgba(255,255,255,.6)">Current decision</div>
+        <h1>Should I exercise my startup options now?</h1>
+        <p>
+          Maeve turns the conversation into a shared decision model. Change the assumptions on the left to see
+          what actually changes the recommendation — and what only improves precision.
+        </p>
+        <div class="journey">
+          <span class="step">Explore</span><span class="arrow">→</span>
+          <span class="step active">Estimate</span><span class="arrow">→</span>
+          <span class="step">Calculate</span><span class="arrow">→</span>
+          <span class="step">Decide</span><span class="arrow">→</span>
+          <span class="step">Monitor</span>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="hero-stat">
+          <div class="label">Decision readiness</div>
+          <div class="value" id="readiness">Medium</div>
+        </div>
+        <div class="hero-stat">
+          <div class="label">Decision-critical unknowns</div>
+          <div class="value" id="unknowns">2 unresolved</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <aside class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>My situation</h2>
+            <p>Manipulate the inputs. Maeve highlights which ones can flip the decision.</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <div class="control-row">
+              <div class="control-title">Current 409A</div>
+              <span class="impact high">High impact</span>
+            </div>
+            <div class="control-row">
+              <span class="micro">Fair market value / share</span>
+              <span class="value-badge" id="f409a">$14.50</span>
+            </div>
+            <input id="v409a" type="range" min="5" max="35" value="14.5" step="0.5" aria-label="Current 409A valuation" />
+            <div class="micro">Higher 409A generally increases the tax cost of exercising.</div>
+          </div>
+
+          <div class="control">
+            <div class="control-row">
+              <div class="control-title">Cash I want to protect</div>
+              <span class="impact high">High impact</span>
+            </div>
+            <div class="control-row">
+              <span class="micro">From $120k liquid savings</span>
+              <span class="value-badge" id="fcash">$70k</span>
+            </div>
+            <input id="vcash" type="range" min="40" max="110" value="70" step="5" aria-label="Protected cash reserve" />
+            <div class="micro">More protected cash makes self-funded exercise less attractive.</div>
+          </div>
+
+          <div class="control">
+            <div class="control-row">
+              <div class="control-title">Move to Netherlands</div>
+              <span class="impact high">High impact</span>
+            </div>
+            <select id="vmove" aria-label="Netherlands move timing">
+              <option value="unknown">Not sure yet</option>
+              <option value="soon">Within 6 months</option>
+              <option value="later">In 6–18 months</option>
+              <option value="no">No planned move</option>
+            </select>
+            <div class="micro">Cross-border timing can change which tax rules matter and when.</div>
+          </div>
+
+          <div class="control">
+            <div class="control-row">
+              <div class="control-title">Exit confidence</div>
+              <span class="impact medium">Strategic</span>
+            </div>
+            <select id="vexit" aria-label="Exit confidence">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+            <div class="micro">This is not a fact; it is a personal conviction input.</div>
+          </div>
+
+          <div class="control">
+            <div class="control-row">
+              <div class="control-title">Filing status</div>
+              <span class="impact medium">Tax impact</span>
+            </div>
+            <select id="vfiling" aria-label="Filing status">
+              <option value="single" selected>Single</option>
+              <option value="joint">Married filing jointly</option>
+            </select>
+            <div class="micro">Used here only as a directional signal — not an actual AMT calculation.</div>
+          </div>
+
+          <div class="control">
+            <div class="control-row">
+              <div class="control-title">Salary / year</div>
+              <span class="impact medium">Tax impact</span>
+            </div>
+            <div class="control-row">
+              <span class="micro">Gross income</span>
+              <span class="value-badge" id="fsalary">$260k</span>
+            </div>
+            <input id="vsalary" type="range" min="120" max="450" value="260" step="10" aria-label="Annual salary" />
+          </div>
+        </div>
+      </aside>
+
+      <main class="maincol">
+        <section class="panel recommend">
+          <div>
+            <div class="rec-kicker">Current direction</div>
+            <div class="rec-title" id="recTitle">Partial exercise looks strongest</div>
+            <p class="rec-copy" id="recCopy">
+              You appear to have enough liquidity to exercise a meaningful tranche without exhausting your safety buffer,
+              but several assumptions still make an all-in decision premature.
+            </p>
+
+            <div class="reason-list" id="reasons"></div>
+
+            <div class="actions">
+              <button class="btn primary" id="challengeBtn" type="button">Challenge this recommendation</button>
+              <button class="btn secondary" id="calcBtn" type="button">What would make this “verified”?</button>
+            </div>
+
+            <div class="drawer" id="challengeDrawer"></div>
+            <div class="drawer" id="calcDrawer">
+              A verified recommendation would require structured equity and tax inputs, then a calculation through Secfi's
+              financial engine. This concept deliberately separates <b>directional reasoning</b> from <b>verified calculation</b>.
+            </div>
+          </div>
+
+          <div class="scorebox">
+            <h4>Recommendation strength</h4>
+            <div class="score-row">
+              <div class="score-top"><span>Partial exercise</span><b id="spTxt">72</b></div>
+              <div class="bar"><div class="fill" id="spBar" style="width:72%"></div></div>
+            </div>
+            <div class="score-row">
+              <div class="score-top"><span>Wait</span><b id="swTxt">46</b></div>
+              <div class="bar"><div class="fill warn" id="swBar" style="width:46%"></div></div>
+            </div>
+            <div class="score-row">
+              <div class="score-top"><span>Financing</span><b id="sfTxt">40</b></div>
+              <div class="bar"><div class="fill alt" id="sfBar" style="width:40%"></div></div>
+            </div>
+            <div class="confidence">
+              <span>Direction maturity</span>
+              <b id="maturity">Preliminary</b>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Decision drivers</h3>
+                <p>Not all missing data deserves the same attention.</p>
+              </div>
+            </div>
+            <div class="driver-list">
+              <div class="driver">
+                <div><div class="driver-name">409A valuation</div><div class="driver-sub">Tax cost</div></div>
+                <div class="driver-track"><span id="d409a"></span></div>
+                <div class="driver-outcome" id="o409a"></div>
+              </div>
+              <div class="driver">
+                <div><div class="driver-name">Cash reserve</div><div class="driver-sub">Liquidity</div></div>
+                <div class="driver-track"><span id="dcash"></span></div>
+                <div class="driver-outcome" id="ocash"></div>
+              </div>
+              <div class="driver">
+                <div><div class="driver-name">Relocation timing</div><div class="driver-sub">Cross-border tax</div></div>
+                <div class="driver-track"><span id="dmove"></span></div>
+                <div class="driver-outcome" id="omove"></div>
+              </div>
+              <div class="driver">
+                <div><div class="driver-name">Exit confidence</div><div class="driver-sub">Upside conviction</div></div>
+                <div class="driver-track"><span id="dexit"></span></div>
+                <div class="driver-outcome" id="oexit"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>What could flip the decision?</h3>
+                <p>Decision boundaries are more useful than a single “confidence score.”</p>
+              </div>
+            </div>
+            <div class="boundary-list" id="boundaries"></div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Decision map</h3>
+              <p>Your current state sits inside a broader landscape. Move the controls to see where you land.</p>
+            </div>
+            <div class="mini-label">Illustrative</div>
+          </div>
+          <div class="decision-map">
+            <div class="map" aria-label="Illustrative decision map">
+              <div class="zone partial">Partial exercise zone</div>
+              <div class="zone wait">Wait zone</div>
+              <div class="zone finance">Financing zone</div>
+              <div class="you" id="youDot" title="You are here"></div>
+              <div class="axisx">Higher 409A / tax exposure →</div>
+              <div class="axisy">More liquidity pressure →</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          Fictional prototype for product exploration only. The recommendation model is intentionally heuristic so the demo can
+          illustrate interaction patterns; it must not be interpreted as tax, legal, or investment advice.
+        </div>
+      </main>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const v409a=$('v409a'), vcash=$('vcash'), vmove=$('vmove'), vexit=$('vexit'),
+        vfiling=$('vfiling'), vsalary=$('vsalary');
+
+  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+
+  function scores(){
+    const v = parseFloat(v409a.value);
+    const reserve = parseInt(vcash.value,10);
+    const salary = parseInt(vsalary.value,10);
+    const move = vmove.value;
+    const exit = vexit.value;
+    const filing = vfiling.value;
+
+    let partial=58, wait=36, finance=30;
+
+    if(v <= 12){ partial+=12; wait-=5; }
+    else if(v <= 20){ partial+=6; }
+    else if(v <= 26){ wait+=16; partial-=8; finance+=5; }
+    else { wait+=26; partial-=15; finance+=8; }
+
+    if(reserve >= 95){ finance+=22; partial-=10; }
+    else if(reserve >= 80){ finance+=10; partial-=4; }
+    else if(reserve <= 55){ partial+=8; finance-=5; }
+
+    if(move === 'soon'){ wait+=20; partial-=12; finance-=3; }
+    else if(move === 'later'){ wait+=8; partial-=3; }
+    else if(move === 'unknown'){ wait+=5; }
+    else { partial+=5; }
+
+    if(exit === 'low'){ wait+=22; partial-=14; finance-=10; }
+    else if(exit === 'medium'){ partial+=6; }
+    else { partial+=8; finance+=12; wait-=6; }
+
+    if(filing === 'joint'){ partial+=6; wait-=3; }
+    if(salary > 330){ wait+=6; partial-=3; }
+    if(salary < 200){ partial+=4; }
+
+    partial=clamp(Math.round(partial),8,96);
+    wait=clamp(Math.round(wait),8,96);
+    finance=clamp(Math.round(finance),8,96);
+    return {partial,wait,finance,v,reserve,salary,move,exit,filing};
+  }
+
+  function update(){
+    const s=scores();
+    $('f409a').textContent='$'+s.v.toFixed(2);
+    $('fcash').textContent='$'+s.reserve+'k';
+    $('fsalary').textContent='$'+s.salary+'k';
+
+    const ranked=[
+      ['Partial exercise',s.partial],
+      ['Wait',s.wait],
+      ['Financing',s.finance]
+    ].sort((a,b)=>b[1]-a[1]);
+
+    const winner=ranked[0][0];
+    let title='', copy='';
+    if(winner==='Partial exercise'){
+      title='Partial exercise looks strongest';
+      copy='A staged exercise preserves optionality: you capture some upside while keeping meaningful liquidity and avoiding an all-in bet under uncertainty.';
+    }else if(winner==='Wait'){
+      title='Waiting looks strongest — for now';
+      copy='The current assumptions make immediate exercise harder to justify. The better next action may be to wait for a more informative event, then recalculate.';
+    }else{
+      title='Financing is becoming more attractive';
+      copy='Your desire to protect cash is starting to dominate the decision. External financing may preserve upside without consuming as much of your current liquidity.';
+    }
+    $('recTitle').textContent=title;
+    $('recCopy').textContent=copy;
+
+    $('spBar').style.width=s.partial+'%'; $('spTxt').textContent=s.partial;
+    $('swBar').style.width=s.wait+'%'; $('swTxt').textContent=s.wait;
+    $('sfBar').style.width=s.finance+'%'; $('sfTxt').textContent=s.finance;
+
+    const gap=ranked[0][1]-ranked[1][1];
+    const maturity = gap>=22 ? 'Directional' : gap>=10 ? 'Preliminary' : 'Unstable';
+    $('maturity').textContent=maturity;
+
+    let unresolved=0;
+    if(s.move==='unknown') unresolved++;
+    if(s.exit==='medium') unresolved++;
+    $('unknowns').textContent=unresolved ? unresolved+' unresolved' : 'No critical unknowns';
+    $('readiness').textContent = unresolved>=2 ? 'Medium' : unresolved===1 ? 'Medium–high' : 'High';
+
+    const reasons=[];
+    if(s.v>22) reasons.push(['↑','High 409A','Exercise has become materially more expensive in tax terms.']);
+    else reasons.push(['↘','Moderate 409A','The current spread does not yet dominate the decision.']);
+
+    if(s.reserve>=90) reasons.push(['$','Cash protection','You want to keep a large share of savings untouched.']);
+    else reasons.push(['$','Liquidity available','Your cash buffer still leaves room for a staged exercise.']);
+
+    if(s.move==='soon') reasons.push(['↔','Relocation timing','A near-term move creates a cross-border tax decision before action.']);
+    else if(s.move==='unknown') reasons.push(['?','Relocation unknown','This remains one of the largest strategic unknowns.']);
+
+    if(s.exit==='low') reasons.push(['↓','Low exit confidence','The upside case is not strong enough to justify large irreversible exposure.']);
+    else if(s.exit==='high') reasons.push(['↑','High exit confidence','You value preserving upside, which strengthens exercise or financing.']);
+
+    $('reasons').innerHTML = reasons.slice(0,3).map(r=>`
+      <div class="reason"><div class="icon">${r[0]}</div><div><strong>${r[1]}</strong><span>${r[2]}</span></div></div>
+    `).join('');
+
+    const impact409a=clamp(((s.v-5)/30)*100,18,95);
+    const impactCash=clamp(((s.reserve-40)/70)*100,18,95);
+    const impactMove=s.move==='soon'?95:s.move==='unknown'?82:s.move==='later'?65:35;
+    const impactExit=s.exit==='low'?90:s.exit==='medium'?62:76;
+    $('d409a').style.width=impact409a+'%';
+    $('dcash').style.width=impactCash+'%';
+    $('dmove').style.width=impactMove+'%';
+    $('dexit').style.width=impactExit+'%';
+    $('o409a').textContent=s.v>22?'Can flip direction':'Mostly changes cost';
+    $('ocash').textContent=s.reserve>=90?'Financing pressure':'Supports self-funding';
+    $('omove').textContent=s.move==='soon'?'Requires review':s.move==='unknown'?'Critical unknown':'Lower uncertainty';
+    $('oexit').textContent=s.exit==='low'?'Pushes toward wait':s.exit==='high'?'Pushes toward upside':'Moderate';
+
+    const boundaries=[];
+    if(s.v<22){
+      boundaries.push(['409A','If valuation rises above ~ $22/share','Waiting becomes materially stronger in this demo because the exercise spread becomes much larger.']);
+    }else{
+      boundaries.push(['409A','If valuation falls below ~ $22/share','A staged self-funded exercise becomes more competitive again.']);
+    }
+    if(s.reserve<90){
+      boundaries.push(['Liquidity','If you protect ≥ $90k of cash','Financing becomes more attractive because preserving liquidity starts to dominate.']);
+    }else{
+      boundaries.push(['Liquidity','If your protected cash falls below ~ $80k','Self-funded partial exercise becomes more viable.']);
+    }
+    if(s.move!=='soon'){
+      boundaries.push(['Life event','If the Netherlands move becomes imminent','Pause the recommendation and resolve cross-border tax timing before action.']);
+    }else{
+      boundaries.push(['Life event','If relocation is delayed or cancelled','The tax-timing uncertainty drops and the decision can be recalculated with fewer blockers.']);
+    }
+    $('boundaries').innerHTML=boundaries.map(b=>`
+      <div class="boundary"><span class="tag">${b[0]}</span><div><b>${b[1]}</b><p>${b[2]}</p></div></div>
+    `).join('');
+
+    const x = clamp(10 + ((s.v-5)/30)*78, 10, 88);
+    const liquidityPressure = clamp((s.reserve-40)/70,0,1);
+    const y = clamp(24 + liquidityPressure*55 + (s.move==='soon'?8:0),18,84);
+    $('youDot').style.left=`calc(${x}% - 9px)`;
+    $('youDot').style.top=`calc(${y}% - 9px)`;
+
+    $('challengeDrawer').innerHTML = `
+      <b>Maeve would challenge this direction by asking:</b><br>
+      • What assumption would most quickly make <i>${winner}</i> wrong?<br>
+      • Are you optimizing for upside, liquidity, or regret avoidance?<br>
+      • Which event should trigger a re-check: 409A change, tender offer, relocation, or departure from the company?
+    `;
+  }
+
+  [v409a,vcash,vmove,vexit,vfiling,vsalary].forEach(el=>el.addEventListener('input',update));
+  $('challengeBtn').addEventListener('click',()=> $('challengeDrawer').classList.toggle('show'));
+  $('calcBtn').addEventListener('click',()=> $('calcDrawer').classList.toggle('show'));
+  update();
+})();
+</script>
+</body>
+</html>

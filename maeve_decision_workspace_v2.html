@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maeve Decision Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  /* Tokens sampled from my.secfi.com/maeve (Matter → DM Sans, Reckless → Newsreader as public stand-ins) */
+  :root{
+    --ink:#292a2d;
+    --muted:#5b666f;
+    --faint:#8a939a;
+    --line:rgba(91,102,111,.25);
+    --line-soft:#e6e8e9;
+    --fill:rgba(91,102,111,.08);
+    --fill-2:rgba(91,102,111,.14);
+    --teal:#004250;
+    --teal-2:#5c8b9e;
+    --teal-bg:#eef4f6;
+    --amber:#94601c;
+    --amber-bg:#fbf3e4;
+    --green:#2c6b5a;
+    --green-bg:#ebf4f0;
+    --shadow:0 2px 11px rgba(21,96,121,.06), 0 18px 48px rgba(21,96,121,.07);
+    --serif:"Reckless","Newsreader",Georgia,serif;
+    --sans:"Matter","DM Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--sans);color:var(--ink);background:#fff;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  button,select,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+  :focus-visible{outline:2px solid var(--teal-2);outline-offset:2px;border-radius:6px}
+
+  /* ---------- App shell (Secfi) ---------- */
+  .shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+  .side{position:sticky;top:0;height:100vh;background:linear-gradient(183deg,#f4f4f4 0%,#fff 100%);border-right:1px solid var(--line-soft);padding:16px 20px;display:flex;flex-direction:column}
+  .wordmark{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:-.04em;margin:0 0 22px 12px;line-height:1}
+  .nav{display:flex;flex-direction:column;gap:2px}
+  .nav a{display:flex;align-items:center;gap:12px;padding:6px 12px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:16px}
+  .nav a:hover{background:var(--fill)}
+  .nav a.on{background:var(--fill-2)}
+  .nav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;opacity:.75}
+  .subnav{margin:2px 0 4px 21px;padding-left:12px;border-left:1px solid var(--line-soft);display:flex;flex-direction:column;gap:2px}
+  .subnav a{font-size:14px;padding:6px 12px}
+  .side-foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:15px;color:var(--muted)}
+  .avatar{width:20px;height:20px;border-radius:50%;background:var(--teal-bg);color:var(--teal);display:grid;place-items:center;font-size:11px;font-weight:600}
+
+  .main{display:flex;flex-direction:column;min-width:0;
+    background:radial-gradient(1200px 380px at 70% -60px,rgba(92,139,158,.16),rgba(255,255,255,0) 70%),#fff}
+  .topbar{position:sticky;top:0;z-index:20;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;border-bottom:1px solid var(--line-soft);background:rgba(250,250,250,.85);backdrop-filter:blur(8px)}
+  .crumbs{display:flex;align-items:center;gap:10px;font-size:16px;color:var(--muted);white-space:nowrap;overflow:hidden}
+  .crumbs b{font-weight:400;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+  .crumbs i{font-style:normal;opacity:.5}
+  .pill{border:0;background:var(--fill-2);border-radius:300px;padding:6px 16px;font-size:14px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .pill:hover{background:rgba(91,102,111,.2)}
+
+  /* ---------- Workspace: one panel fills the main area ---------- */
+  .stage{flex:none;display:flex;flex-direction:column;padding:16px 20px 8px;height:calc(100vh - 68px);min-height:620px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+  .ws{flex:1;display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0}
+  .ws-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:16px 28px 14px;border-bottom:1px solid var(--line-soft)}
+  .eyebrow{font-size:12.5px;color:var(--muted)}
+  h1{font-family:var(--serif);font-weight:400;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin:2px 0 0}
+  .stages{display:inline-flex;gap:4px;align-items:center;font-size:12.5px;color:var(--faint);flex-wrap:wrap;padding-bottom:4px}
+  .stages span{display:inline-flex;align-items:center;gap:6px}
+  .stages span:not(:last-child)::after{content:"";width:16px;height:1px;background:var(--line);margin:0 2px 0 6px}
+  .stages .done{color:var(--muted)}
+  .stages .now{color:var(--teal);font-weight:600}
+  .stages .now::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal)}
+
+  .ws-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,420px);min-height:0}
+  .ws-main{overflow:auto;display:flex;align-items:center;padding:36px 56px;
+    background:radial-gradient(700px 360px at 30% 20%,rgba(92,139,158,.10),rgba(255,255,255,0) 70%)}
+  .ws-main-inner{max-width:580px;width:100%}
+  .label{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .verdict{font-family:var(--serif);font-weight:400;font-size:64px;line-height:1.02;letter-spacing:-.035em;margin:10px 0 14px;
+    background:linear-gradient(69deg,var(--teal-2) 8%,var(--teal) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;transition:opacity .2s}
+  .verdict.swap{opacity:0}
+  .why{margin:0;color:var(--muted);font-size:16px;max-width:46ch}
+  .alts{margin-top:10px;font-size:13px;color:var(--faint)}
+  .ready{margin-top:28px;display:flex;align-items:center;gap:14px;padding:14px 14px 14px 18px;border-radius:12px}
+  .ready.amber{background:var(--amber-bg)}
+  .ready.teal{background:var(--teal-bg)}
+  .ready.green{background:var(--green-bg)}
+  .ready p{margin:0;font-size:14px;line-height:1.4;flex:1}
+  .ready .tag{font-weight:600}
+  .ready.amber .tag{color:var(--amber)}
+  .ready.teal .tag{color:var(--teal)}
+  .ready.green .tag{color:var(--green)}
+  .btn{border:0;border-radius:8px;padding:9px 14px;font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+  .btn.primary{background:var(--teal);color:#fff}
+  .btn.primary:hover{background:#0b5363}
+  .btn.link{background:none;padding:0;color:var(--teal);font-weight:500}
+  .btn.link:hover{text-decoration:underline}
+
+  .ws-side{border-left:1px solid var(--line-soft);display:flex;flex-direction:column;min-height:0;background:#fcfcfc}
+  .ws-foot{border-top:1px solid var(--line-soft);padding:12px 20px 14px;background:#fff}
+  .flip{display:none;align-items:center;gap:8px;margin-top:12px;padding:10px 14px;border-radius:10px;border:1px solid #f1e3c8;color:var(--amber);font-size:13.5px;flex-wrap:wrap}
+  .flip.show{display:flex;animation:in .3s ease}
+  .flip b{font-weight:600}
+  .flip .btn.link{color:var(--amber);text-decoration:underline}
+  @keyframes in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+  .calc{display:none;margin-top:16px;padding:16px 18px;border:1px solid var(--line-soft);border-radius:12px;background:#fff}
+  .calc.show{display:block;animation:in .3s ease}
+  .calc-row{display:flex;gap:32px;flex-wrap:wrap;margin-top:10px}
+  .calc-row div{display:flex;flex-direction:column;max-width:170px}
+  .calc-row b{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:-.02em;color:var(--teal)}
+  .calc-row span{font-size:12.5px;color:var(--muted);line-height:1.35}
+
+  /* Depth: one layer at a time */
+  .depth-tabs{display:flex;padding:0 16px;gap:4px;border-bottom:1px solid var(--line-soft);background:#fff;flex:none}
+  .dtab{border:0;background:none;padding:14px 12px 12px;font-size:14.5px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .dtab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+  .dpane{padding:4px 24px 20px;overflow:auto;flex:1;min-height:0}
+  .dpane[hidden]{display:none}
+  .dnote{font-size:13px;color:var(--faint);margin:14px 0 0}
+
+  /* Drivers: threshold + control in one row */
+  .driver{padding:18px 0;border-bottom:1px solid var(--line-soft)}
+  .driver:last-of-type{border-bottom:0}
+  .d-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .d-name{font-weight:500}
+  .d-val{font-variant-numeric:tabular-nums;color:var(--teal);font-weight:500}
+  .d-rule{font-size:13.5px;color:var(--muted);margin:2px 0 20px}
+  .d-rule em{font-style:normal;color:var(--ink)}
+  .d-rule .hot{color:var(--amber);font-weight:500}
+  .track{position:relative}
+  .track input[type=range]{width:100%;accent-color:var(--teal);margin:0;position:relative;z-index:1}
+  .tick{position:absolute;top:-6px;bottom:-6px;width:0;border-left:1.5px dashed var(--amber);z-index:0}
+  .tick span{position:absolute;top:-16px;transform:translateX(-50%);font-size:11px;color:var(--amber);white-space:nowrap}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px}
+  .seg button{flex:1;border:0;background:none;border-radius:6px;padding:6px 4px;font-size:13px;color:var(--muted);white-space:nowrap}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .seg button .fl{color:var(--amber);margin-left:4px}
+  .seg button[aria-pressed="true"] .fl{color:#f3c98a}
+  .more-btn{margin-top:16px}
+  .more-body{display:none;margin-top:4px}
+  .more-body.show{display:block}
+  .whatif{font-size:11.5px;color:var(--amber);background:var(--amber-bg);border-radius:99px;padding:1px 8px;margin-left:8px;font-weight:500}
+
+  /* Sources (Trust lens) */
+  .src-filter{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
+  .sf{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;font-size:13.5px;display:inline-flex;align-items:center;gap:8px}
+  .sf .c{font-size:12px;color:var(--faint)}
+  .sf[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .sf[aria-pressed="true"] .c{color:rgba(255,255,255,.65)}
+  .sf .dot{width:7px;height:7px;border-radius:50%}
+  .k-verified{background:var(--teal)} .k-calculated{background:var(--teal-2)} .k-assumed{background:#b7bec3} .k-check{background:#d49a45}
+  .facts{list-style:none;margin:8px 0 0;padding:0}
+  .facts li{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:14.5px}
+  .facts li:last-child{border-bottom:0}
+  .facts li span:last-child{color:var(--muted);text-align:right}
+  .src{position:relative;border-bottom:1px dotted currentColor;cursor:help;font-variant-numeric:tabular-nums}
+  .src.verified,.src.calculated{color:var(--teal)} .src.estimated{color:var(--amber)} .src.assumed{color:var(--muted)}
+  .src::after{content:attr(data-tip);position:absolute;right:0;bottom:calc(100% + 8px);background:#2b2d31;color:#fff;font-size:12.5px;line-height:1.35;white-space:nowrap;padding:7px 12px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .12s;z-index:30}
+  .src:hover::after,.src:focus::after{opacity:1}
+
+  /* Composer */
+    .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;font-size:14px;white-space:nowrap}
+  .chip:hover{background:var(--fill)}
+  .composer{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 16px;box-shadow:0 2px 11px rgba(21,96,121,.06);background:#fff}
+  .composer input{flex:1;border:0;outline:0;font-size:15px;background:none;min-width:0}
+  .composer input::placeholder{color:var(--faint)}
+  .send{width:32px;height:32px;border-radius:8px;border:0;background:#7d858c;display:grid;place-items:center}
+  .send svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.6}
+  .disclaimer{font-size:12px;color:var(--faint);text-align:center;margin-top:8px}
+
+  /* Modal */
+  .scrim{position:fixed;inset:0;background:rgba(41,42,45,.32);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .scrim.show{display:flex}
+  .modal{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:in .2s ease}
+  .modal-head{padding:22px 24px 4px}
+  .modal-head h3{font-family:var(--serif);font-weight:400;font-size:26px;letter-spacing:-.02em;margin:4px 0}
+  .modal-head p{margin:0;color:var(--muted);font-size:14px}
+  .modal-body{padding:16px 24px}
+  .q{padding:14px 0;border-top:1px solid var(--line-soft)}
+  .q:first-child{border-top:0}
+  .q-t{font-weight:500;margin-bottom:2px}
+  .q-w{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .choices{display:flex;flex-wrap:wrap;gap:8px}
+  .choice{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:14px}
+  .choice[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-bg);color:var(--teal)}
+  .modal-foot{padding:14px 24px 20px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--line-soft)}
+  .btn.ghost{background:#fff;border:1px solid var(--line)}
+  .receipt dl{display:grid;grid-template-columns:130px 1fr;gap:10px 16px;margin:0;font-size:14px}
+  .receipt dt{color:var(--muted)} .receipt dd{margin:0} .receipt ul{margin:4px 0 0;padding-left:18px}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#2b2d31;color:#fff;font-size:14px;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:calc(100vw - 32px)}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+
+  @media (max-width:1180px){
+    .ws-main{padding:32px 36px}
+    .verdict{font-size:52px}
+  }
+  @media (max-width:860px){
+    .shell{grid-template-columns:1fr}
+    .side{display:none}
+    .topbar{padding:0 16px}
+    .crumbs .hide-sm{display:none}
+    .pill .lbl{display:none}
+    .stage{height:auto;min-height:0;padding:12px 12px 8px}
+    .ws{display:flex;flex-direction:column}
+    .ws-head{flex-direction:column;align-items:flex-start;gap:8px;padding:16px 18px 12px}
+    h1{font-size:22px}
+    .ws-body{display:block}
+    .ws-main{padding:28px 20px}
+    .verdict{font-size:42px}
+    .ready{flex-direction:column;align-items:stretch}
+    .ws-side{border-left:0;border-top:1px solid var(--line-soft)}
+    .dpane{overflow:visible;padding:4px 18px 18px}
+    .ws-foot{position:sticky;bottom:0;padding:10px 12px 12px}
+    .calc-row{gap:20px}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side" aria-label="Secfi navigation">
+    <div class="wordmark">secfi</div>
+    <nav class="nav">
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Equity</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v9M19 10v9M9 10v9M15 10v9M3 21h18"/></svg>Taxes</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h2M13 12h2M9 16h2M13 16h2"/></svg>Tools</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6.5v11"/></svg>Financing</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>Secondaries</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 15l3-3 3 2 4-5"/></svg>Wealth</a>
+      <a href="#" class="on"><svg viewBox="0 0 24 24"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6zM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg>Maeve</a>
+      <div class="subnav"><a href="#">Chats</a><a href="#" class="on">Decisions</a></div>
+    </nav>
+    <div class="side-foot"><span class="avatar">F</span>Fang</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs"><span class="hide-sm">Maeve</span><i class="hide-sm">›</i><span class="hide-sm">Decisions</span><i class="hide-sm">›</i><b>Exercise my vested ISOs?</b></div>
+      <div style="display:flex;gap:8px">
+        <button class="pill" id="openChat" type="button"><span class="lbl">Open in chat</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+        <button class="pill" id="snapBtn" type="button"><span class="lbl">Save decision</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-4-6 4z"/></svg></button>
+      </div>
+    </header>
+
+    <div class="stage">
+      <article class="panel ws">
+        <header class="ws-head">
+          <div>
+            <div class="eyebrow">Decision workspace · built from your chat on Oct 4</div>
+            <h1>Should I exercise my vested options now?</h1>
+          </div>
+          <div class="stages" id="stages" aria-label="Decision stage">
+            <span class="done">Explore</span><span class="now">Estimate</span><span>Calculate</span><span>Decide</span><span>Monitor</span>
+          </div>
+        </header>
+
+        <div class="ws-body">
+          <!-- Focus area: the current state of the decision -->
+          <section class="ws-main" aria-live="polite">
+            <div class="ws-main-inner">
+              <div class="label">Current direction</div>
+              <div class="verdict" id="verdict">Partial exercise</div>
+              <p class="why" id="why"></p>
+              <div class="alts" id="alts"></div>
+              <div class="ready amber" id="ready">
+                <p id="readyCopy"></p>
+                <button class="btn primary" id="readyBtn" type="button"></button>
+              </div>
+              <div class="flip" id="flip" role="status"></div>
+              <div class="calc" id="calc"></div>
+            </div>
+          </section>
+
+          <!-- Inspector: one layer at a time -->
+          <section class="ws-side">
+            <div class="depth-tabs" role="tablist">
+              <button class="dtab" role="tab" type="button" data-p="drivers" aria-selected="true">What could change it</button>
+              <button class="dtab" role="tab" type="button" data-p="sources" aria-selected="false">What it's built on</button>
+            </div>
+            <div class="dpane" id="p-drivers" role="tabpanel">
+              <div class="driver">
+                <div class="d-top"><span class="d-name">Current 409A <span class="whatif" id="w409a" hidden>What-if</span></span><span class="d-val" id="f409a"></span></div>
+                <div class="d-rule" id="r409a"></div>
+                <div class="track"><div class="tick" id="t409a"><span>$22</span></div><input id="v409a" type="range" min="5" max="35" step="0.5" value="14.5" aria-label="Current 409A per share" /></div>
+              </div>
+              <div class="driver">
+                <div class="d-top"><span class="d-name">Cash to keep untouched <span class="whatif" id="wcash" hidden>What-if</span></span><span class="d-val" id="fcash"></span></div>
+                <div class="d-rule" id="rcash"></div>
+                <div class="track"><div class="tick" id="tcash"><span>$90k</span></div><input id="vcash" type="range" min="40" max="110" step="5" value="70" aria-label="Cash reserve to protect" /></div>
+              </div>
+              <div class="driver">
+                <div class="d-top"><span class="d-name">Move to the Netherlands <span class="whatif" id="wmove" hidden>What-if</span></span></div>
+                <div class="d-rule" id="rmove"></div>
+                <div class="seg" id="vmove">
+                  <button type="button" data-v="unknown">Not sure</button>
+                  <button type="button" data-v="soon">≤ 6 mo<span class="fl">●</span></button>
+                  <button type="button" data-v="later">6–18 mo</button>
+                  <button type="button" data-v="no">Not moving</button>
+                </div>
+              </div>
+
+              <button class="btn link more-btn" id="moreBtn" type="button" aria-expanded="false">+ 3 inputs that only refine precision</button>
+              <div class="more-body" id="moreBody">
+                <div class="driver">
+                  <div class="d-top"><span class="d-name">Exit confidence</span></div>
+                  <div class="d-rule">Your view, not a fact Maeve can verify.</div>
+                  <div class="seg" id="vexit"><button type="button" data-v="low">Low</button><button type="button" data-v="medium">Medium</button><button type="button" data-v="high">High</button></div>
+                </div>
+                <div class="driver">
+                  <div class="d-top"><span class="d-name">Filing status</span></div>
+                  <div class="d-rule" id="rfiling"></div>
+                  <div class="seg" id="vfiling"><button type="button" data-v="single">Single</button><button type="button" data-v="joint">Married, jointly</button></div>
+                </div>
+                <div class="driver">
+                  <div class="d-top"><span class="d-name">Salary</span><span class="d-val" id="fsalary"></span></div>
+                  <div class="d-rule">Verified from your tax profile.</div>
+                  <div class="track"><input id="vsalary" type="range" min="120" max="450" step="10" value="260" aria-label="Annual salary" /></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dpane" id="p-sources" role="tabpanel" hidden>
+              <div class="src-filter" id="srcFilter"></div>
+              <ul class="facts" id="facts"></ul>
+              <p class="dnote" id="srcNote"></p>
+            </div>
+          </section>
+        </div>
+
+        <footer class="ws-foot">
+        <div class="chips" id="chips">
+          <button class="chip" type="button" data-q="move">What if I move in 6 months?</button>
+          <button class="chip" type="button" data-q="cash">What if I need $95k in cash?</button>
+          <button class="chip" type="button" data-q="409a">What if the 409A jumps to $24?</button>
+          <button class="chip" type="button" data-q="tender">What if a tender offer is confirmed?</button>
+        </div>
+        <form class="composer" id="composer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5c8b9e" stroke-width="1.5"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6zM18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg>
+          <input id="ask" placeholder="Ask Maeve about this decision…" aria-label="Ask Maeve" />
+          <button class="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></button>
+        </form>
+        </footer>
+      </article>
+      <div class="disclaimer">Concept prototype with fictional data and a heuristic model. Not tax, legal or investment advice.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Resolve unknowns -->
+<div class="scrim" id="resolveScrim" role="dialog" aria-modal="true" aria-labelledby="resolveTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="label">2 quick questions</div>
+      <h3 id="resolveTitle">Before I go further</h3>
+      <p>These two answers can change the direction. Everything else only changes the precision.</p>
+    </div>
+    <div class="modal-body">
+      <div class="q">
+        <div class="q-t">How do you file taxes?</div>
+        <div class="q-w">Filing jointly roughly doubles your AMT exemption, so you could exercise far more shares tax-free.</div>
+        <div class="choices" data-for="filing">
+          <button class="choice" type="button" data-v="single">Single</button>
+          <button class="choice" type="button" data-v="joint">Married, filing jointly</button>
+        </div>
+      </div>
+      <div class="q">
+        <div class="q-t">When might you move to the Netherlands?</div>
+        <div class="q-w">Exercising before vs. after the move changes which country taxes the gain.</div>
+        <div class="choices" data-for="move">
+          <button class="choice" type="button" data-v="soon">Within 6 months</button>
+          <button class="choice" type="button" data-v="later">In 6–18 months</button>
+          <button class="choice" type="button" data-v="no">Not moving</button>
+          <button class="choice" type="button" data-v="unknown">Still unsure</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" data-close>Later</button>
+      <button class="btn primary" type="button" id="resolveDone" disabled>Update direction</button>
+    </div>
+  </div>
+</div>
+
+<!-- Decision receipt -->
+<div class="scrim" id="snapScrim" role="dialog" aria-modal="true" aria-labelledby="snapTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="label">Decision record · Oct 5, 2026</div>
+      <h3 id="snapTitle"></h3>
+      <p id="snapSub"></p>
+    </div>
+    <div class="modal-body receipt" id="snapBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" type="button" data-close>Close</button>
+      <button class="btn primary" type="button" id="watchBtn">Watch these for me</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const PROFILE = { v409a:14.5, cash:70, move:'unknown', exit:'medium', filing:'single', salary:260 };
+  const state = { ...PROFILE, confirmed:{ filing:false, move:false }, calculated:false, src:'check' };
+  let lastWinner = null, lastChange = null;
+
+  const OPT = { partial:'Partial exercise', wait:'Wait', finance:'Use financing' };
+  const MOVE_LABEL = { unknown:'Not sure yet', soon:'Within 6 months', later:'In 6–18 months', no:'Not moving' };
+  const clamp = (n,a,b) => Math.max(a, Math.min(b, n));
+  const src = (kind, text, tip) => `<span class="src ${kind}" tabindex="0" data-tip="${tip}">${text}</span>`;
+
+  /* Heuristic model: intentionally simple — the demo is about the interaction, not the math */
+  function score(s){
+    let partial=58, wait=36, finance=30;
+    const v=s.v409a;
+    if(v<=12){partial+=12;wait-=5}else if(v<22){partial+=6}else if(v<=26){wait+=20;partial-=8;finance+=5}else{wait+=26;partial-=15;finance+=8}
+    if(s.cash>=90){finance+=32;partial-=12}else if(s.cash>=80){finance+=10;partial-=4}else if(s.cash<=55){partial+=8;finance-=5}
+    if(s.move==='soon'){wait+=26;partial-=15;finance-=3}else if(s.move==='later'){wait+=8;partial-=3}else if(s.move==='unknown'){wait+=5}else{partial+=5}
+    if(s.exit==='low'){wait+=22;partial-=14;finance-=10}else if(s.exit==='medium'){partial+=6}else{partial+=8;finance+=12;wait-=6}
+    if(s.filing==='joint'){partial+=6;wait-=3}
+    if(s.salary>330){wait+=6;partial-=3} if(s.salary<200){partial+=4}
+    return { partial, wait, finance };
+  }
+
+  const WHY = {
+    partial:'Exercise a tranche now to capture some upside, while keeping your home-purchase buffer intact.',
+    wait:'Exercising now is hard to justify under these assumptions. Wait for a clearer event, then recalculate.',
+    finance:'Protecting your cash now dominates. Financing keeps the upside without drawing down your savings.'
+  };
+
+  const isWhatIf = () => ['v409a','cash','exit','salary'].some(k => state[k] !== PROFILE[k]) ||
+    (!state.confirmed.move && state.move !== PROFILE.move) || (!state.confirmed.filing && state.filing !== PROFILE.filing);
+
+  function unknowns(){
+    const u=[];
+    if(!state.confirmed.filing) u.push('filing');
+    if(!state.confirmed.move || state.move==='unknown') u.push('move');
+    return u;
+  }
+
+  function render(){
+    const sc = score(state);
+    const ranked = Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+    const [winner, top] = ranked[0];
+    const gap = top - ranked[1][1];
+
+    const verdict = $('verdict');
+    if(lastWinner && lastWinner !== winner){
+      verdict.classList.add('swap');
+      setTimeout(()=>{ verdict.textContent = OPT[winner]; verdict.classList.remove('swap'); },160);
+      $('flip').innerHTML = `Changed from <b>${OPT[lastWinner]}</b> to <b>${OPT[winner]}</b>${lastChange?` after adjusting ${lastChange}`:''} · <button class="btn link" type="button" id="undoFlip">Reset to my profile</button>`;
+      $('flip').classList.add('show');
+      $('undoFlip').onclick = reset;
+      state.calculated = false;
+    } else if(!lastWinner){ verdict.textContent = OPT[winner]; }
+    if(!isWhatIf()) $('flip').classList.remove('show');
+    lastWinner = winner;
+    $('why').textContent = WHY[winner];
+
+    // alternatives: one quiet line, no false-precision scores
+    const lead = gap>=15 ? 'Clear lead' : gap>=6 ? 'Narrow lead' : 'Toss-up';
+    const next = OPT[ranked[1][0]].toLowerCase();
+    $('alts').textContent = `${gap<6 ? 'Toss-up with '+next : lead+' over '+next} · ${OPT[ranked[2][0]].toLowerCase()} is less suited`;
+
+    // readiness: maturity stated before the user acts
+    const u = unknowns(), ready=$('ready'), btn=$('readyBtn'), copy=$('readyCopy');
+    if(state.calculated){
+      ready.className='ready green';
+      copy.innerHTML='<span class="tag">Calculated.</span> The numbers below come from the Secfi tax engine using your confirmed inputs.';
+      btn.textContent='Save decision'; btn.onclick=openSnap;
+    } else if(u.length){
+      ready.className='ready amber';
+      copy.innerHTML=`<span class="tag">Preliminary.</span> ${u.length} unanswered question${u.length>1?'s':''} could still change this direction.`;
+      btn.textContent=`Answer ${u.length}`+(u.length>1?' questions':' question'); btn.onclick=openResolve;
+    } else {
+      ready.className='ready teal';
+      copy.innerHTML='<span class="tag">Ready to calculate.</span> Nothing open can flip this. Get exact share counts and tax.';
+      btn.textContent='Run calculation'; btn.onclick=runCalc;
+    }
+    if(!state.calculated) $('calc').classList.remove('show');
+
+    const stage = state.calculated ? 2 : 1;
+    [...$('stages').children].forEach((el,i)=>{ el.className = i<stage?'done':i===stage?'now':''; });
+
+    renderDrivers();
+    renderSources();
+  }
+
+  function renderDrivers(){
+    $('v409a').value=state.v409a; $('vcash').value=state.cash; $('vsalary').value=state.salary;
+    $('f409a').textContent='$'+state.v409a.toFixed(2);
+    $('fcash').textContent='$'+state.cash+'k';
+    $('fsalary').textContent='$'+state.salary+'k';
+    $('w409a').hidden = state.v409a===PROFILE.v409a;
+    $('wcash').hidden = state.cash===PROFILE.cash;
+    $('wmove').hidden = state.confirmed.move || state.move===PROFILE.move;
+
+    $('r409a').innerHTML = state.v409a<22 ? 'Above <em>$22</em>, waiting becomes stronger.' : '<span class="hot">Past the $22 threshold</span>: waiting is now stronger.';
+    $('rcash').innerHTML = state.cash<90 ? 'Above <em>$90k</em>, financing becomes the better route.' : '<span class="hot">Past the $90k threshold</span>: financing is now favoured.';
+    $('rmove').innerHTML = state.move==='soon' ? '<span class="hot">A move within 6 months</span> means reviewing cross-border tax before acting.'
+      : state.move==='unknown' ? '<span class="hot">Unanswered.</span> A move within 6 months would pause this decision.'
+      : 'A move within 6 months would pause this decision.';
+    $('rfiling').innerHTML = state.confirmed.filing ? 'Confirmed by you.' : '<span class="hot">Assumed.</span> Filing jointly roughly doubles your AMT room.';
+
+    $('t409a').style.left = ((22-5)/30*100)+'%';
+    $('tcash').style.left = ((90-40)/70*100)+'%';
+    document.querySelectorAll('#vmove button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===state.move));
+    document.querySelectorAll('#vexit button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===state.exit));
+    document.querySelectorAll('#vfiling button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===state.filing));
+  }
+
+  function renderSources(){
+    const fmt = n => '$'+Math.round(n).toLocaleString('en-US');
+    const groups = {
+      check:{ name:'Needs a check', key:'k-check', items:[
+        ...(state.confirmed.filing?[]:[['Filing status','Assumed single']]),
+        ...(state.confirmed.move && state.move!=='unknown'?[]:[['Netherlands move timing','Unknown']]),
+        ['Tender offer terms','Not announced'],
+        ['Prior AMT credit','Assumed none']
+      ], note:'Only filing status and move timing can change the direction. The rest refine the numbers.'},
+      verified:{ name:'Verified', key:'k-verified', items:[
+        ['Vested ISOs', src('verified','32,000','From Carta import · synced Oct 1')],
+        ['Strike price', src('verified','$3.80','Grant document · uploaded Sep 28')],
+        ['Current 409A', src('verified','$'+PROFILE.v409a.toFixed(2),'Carta · valuation date Jun 30, 2026')],
+        ['Salary', src('verified','$260k','Your tax profile')]
+      ], note:'Pulled from your connected accounts and documents.'},
+      calculated:{ name:'Calculated', key:'k-calculated', items:[
+        ['Cost to exercise all vested', src('calculated',fmt(32000*3.8),'Secfi engine · 32,000 × $3.80')],
+        ['Paper gain (ISO spread)', src('calculated',fmt(32000*(state.v409a-3.8)),'Secfi engine · 32,000 × (409A − strike)')],
+        ['2026 federal AMT exemption, single', src('calculated','$90,100','IRS · tax year 2026')]
+      ], note:'Exact figures from Secfi’s calculation engine or published tax rules.'},
+      assumed:{ name:'Assumed', key:'k-assumed', items:[
+        ['Exit window', src('assumed','2028–2031','Your estimate · not verifiable')],
+        ['Home purchase', src('assumed','within 18 months','You told Maeve')],
+        ['Shares before AMT applies', src('estimated','~3,000–8,000','Maeve estimate · not engine-calculated yet')]
+      ], note:'Reasonable, but not facts. Amber numbers are AI estimates, not calculations.'}
+    };
+    $('srcFilter').innerHTML = Object.entries(groups).map(([k,g])=>
+      `<button class="sf" type="button" data-s="${k}" aria-pressed="${state.src===k}"><span class="dot ${g.key}"></span>${g.name}<span class="c">${g.items.length}</span></button>`).join('');
+    $('srcFilter').querySelectorAll('.sf').forEach(t=> t.onclick=()=>{ state.src=t.dataset.s; renderSources(); });
+    const g = groups[state.src];
+    $('facts').innerHTML = g.items.map(i=>`<li><span>${i[0]}</span><span>${i[1]}</span></li>`).join('');
+    $('srcNote').textContent = g.note;
+  }
+
+  function setVal(key, val, label){
+    state[key] = val;
+    if(key==='move') state.confirmed.move = false;
+    if(key==='filing') state.confirmed.filing = false;
+    lastChange = label;
+    render();
+  }
+
+  function reset(){
+    Object.assign(state, PROFILE, { confirmed:{filing:false,move:false}, calculated:false });
+    lastChange = null; $('flip').classList.remove('show'); render();
+  }
+
+  function showPane(p){
+    document.querySelectorAll('.dtab').forEach(t=>t.setAttribute('aria-selected', t.dataset.p===p));
+    $('p-drivers').hidden = p!=='drivers'; $('p-sources').hidden = p!=='sources';
+  }
+  document.querySelectorAll('.dtab').forEach(t=> t.onclick=()=>showPane(t.dataset.p));
+
+  function runCalc(){
+    state.calculated = true;
+    const room = (state.filing==='joint'?160000:80000) / Math.max(1,(state.v409a-3.8));
+    const affordable = Math.max(0, (120 - state.cash) * 1000 / 3.8);
+    const capped = affordable < room;
+    const shares = clamp(Math.floor(Math.min(room, affordable)/100)*100, 0, 32000);
+    const cash = shares*3.8;
+    render();
+    $('calc').innerHTML = `<div class="label">Secfi tax engine · demo values</div>
+      <div class="calc-row">
+        <div><b>${shares.toLocaleString('en-US')}</b><span>shares to exercise in 2026 · ${capped ? `capped by your $${state.cash}k reserve` : 'before AMT applies'}</span></div>
+        <div><b>$${Math.round(cash/1000)}k</b><span>cash needed · leaves $${120-Math.round(cash/1000)}k of savings</span></div>
+        <div><b>$0</b><span>estimated AMT on this tranche</span></div>
+      </div>`;
+    $('calc').classList.add('show');
+  }
+
+  const pending = {};
+  function openResolve(){
+    pending.filing = state.confirmed.filing ? state.filing : null;
+    pending.move = state.confirmed.move && state.move!=='unknown' ? state.move : null;
+    syncChoices(); $('resolveScrim').classList.add('show');
+  }
+  function syncChoices(){
+    document.querySelectorAll('.choices').forEach(g=>{
+      g.querySelectorAll('.choice').forEach(c=>c.setAttribute('aria-pressed', pending[g.dataset.for]===c.dataset.v));
+    });
+    $('resolveDone').disabled = !(pending.filing && pending.move);
+  }
+  document.querySelectorAll('.choices').forEach(g=> g.addEventListener('click', e=>{
+    const c=e.target.closest('.choice'); if(!c) return; pending[g.dataset.for]=c.dataset.v; syncChoices();
+  }));
+  $('resolveDone').onclick = ()=>{
+    state.filing=pending.filing; state.move=pending.move;
+    state.confirmed={ filing:true, move:pending.move!=='unknown' };
+    lastChange='your answers'; closeAll(); render();
+    toast(unknowns().length ? 'Updated. The move date is still open.' : 'Updated. Nothing left that can flip the direction.');
+  };
+
+  function openSnap(){
+    const w=Object.entries(score(state)).sort((a,b)=>b[1]-a[1])[0][0];
+    $('snapTitle').textContent = OPT[w];
+    $('snapSub').textContent = state.calculated ? 'Calculated with your confirmed inputs.' : `Preliminary · ${unknowns().length} open question(s) when saved.`;
+    $('snapBody').innerHTML = `<dl>
+      <dt>Based on</dt><dd>409A $${state.v409a.toFixed(2)} · keep $${state.cash}k cash · ${MOVE_LABEL[state.move].toLowerCase()} · filing ${state.filing==='joint'?'jointly':'single'}</dd>
+      <dt>Still unverified</dt><dd>${[...(state.confirmed.filing?[]:['Filing status']),...(state.confirmed.move?[]:['Move timing']),'Tender offer terms'].join(' · ')}</dd>
+      <dt>Revisit when</dt><dd><ul><li>A new 409A is issued</li><li>A tender offer is announced</li><li>Your move date is confirmed</li></ul></dd>
+    </dl>`;
+    $('snapScrim').classList.add('show');
+  }
+  $('watchBtn').onclick = ()=>{ closeAll(); toast('Maeve will notify you if any of these 3 events happen.'); };
+
+  function closeAll(){ document.querySelectorAll('.scrim').forEach(s=>s.classList.remove('show')); }
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeAll);
+  document.querySelectorAll('.scrim').forEach(s=>s.addEventListener('click',e=>{ if(e.target===s) closeAll(); }));
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAll(); });
+
+  let tt; function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2600); }
+
+  $('v409a').oninput = e=>setVal('v409a', parseFloat(e.target.value), '409A');
+  $('vcash').oninput = e=>setVal('cash', parseInt(e.target.value,10), 'cash reserve');
+  $('vsalary').oninput = e=>setVal('salary', parseInt(e.target.value,10), 'salary');
+  const segHandler = (key,label) => e=>{ const b=e.target.closest('button'); if(b) setVal(key, b.dataset.v, label); };
+  $('vmove').onclick = segHandler('move','move date');
+  $('vexit').onclick = segHandler('exit','exit confidence');
+  $('vfiling').onclick = segHandler('filing','filing status');
+  $('moreBtn').onclick = e=>{ const open=$('moreBody').classList.toggle('show'); e.target.setAttribute('aria-expanded',open); e.target.textContent = open?'− Hide precision inputs':'+ 3 inputs that only refine precision'; };
+  $('snapBtn').onclick = openSnap;
+  $('openChat').onclick = ()=>toast('Opens the original chat this workspace was built from.');
+
+  // Chat chips drive the workspace
+  $('chips').onclick = e=>{
+    const c=e.target.closest('.chip'); if(!c) return;
+    const act = { tender:()=>toast('Tender terms are unknown. Maeve would pull them in once announced and recalculate.'),
+       move:()=>setVal('move','soon','move date'),
+       cash:()=>setVal('cash',95,'cash reserve'),
+       '409a':()=>setVal('v409a',24,'409A') }[c.dataset.q];
+    showPane('drivers'); act();
+  };
+  $('composer').onsubmit = e=>{ e.preventDefault(); if($('ask').value.trim()){ toast('In the real product this goes to Maeve with the workspace as context.'); $('ask').value=''; } };
+
+  render();
+})();
+</script>
+</body>
+</html>
